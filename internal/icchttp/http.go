@@ -99,3 +99,14 @@ func AuthMiddleware(next http.Handler, auth Authenticater) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+// HandleHealth returns 200 (if the service is running).
+func HandleHealth(mux *http.ServeMux) {
+	mux.HandleFunc(
+		"/system/icc/health",
+		func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/octet-stream")
+			fmt.Fprintln(w, `{"healthy": true}`)
+		},
+	)
+}

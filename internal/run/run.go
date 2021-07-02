@@ -47,6 +47,7 @@ func Run(ctx context.Context, environment []string, secret func(name string) (st
 	service := icc.New(ctx, backend)
 
 	mux := http.NewServeMux()
+	icchttp.HandleHealth(mux)
 	icc.HandleReceive(mux, service, auth)
 	icc.HandleSend(mux, service, auth)
 
