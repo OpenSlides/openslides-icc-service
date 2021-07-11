@@ -43,7 +43,7 @@ jobs:
         DOCKER_BUILDKIT: 1
 
     - name: Test With Golang
-      run: go test ./...
+      run: go test -timeout 10s ./...
 
     - name: Test With With Make
       run: make run-tests
