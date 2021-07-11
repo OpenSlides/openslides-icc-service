@@ -63,15 +63,6 @@ go test ./...
 ```
 
 
-### With Make
-
-There is a make target, that creates and runs the docker-test-container:
-
-```
-make run-tests
-```
-
-
 ## Examples
 
 Curl needs the flag `-N / --no-buffer` or it can happen, that the output is not

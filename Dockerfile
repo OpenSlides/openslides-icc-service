@@ -15,14 +15,6 @@ FROM basis as builder
 RUN CGO_ENABLED=0 go build ./cmd/icc
 
 
-# Test build.
-FROM basis as testing
-
-RUN apk add build-base
-
-CMD go vet ./... && go test ./...
-
-
 # Development build.
 FROM basis as development
 
