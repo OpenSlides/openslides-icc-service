@@ -1,4 +1,4 @@
-package icc_test
+package notify_test
 
 import (
 	"context"
@@ -9,18 +9,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/OpenSlides/openslides-icc-service/internal/icc"
 	"github.com/OpenSlides/openslides-icc-service/internal/iccerror"
+	"github.com/OpenSlides/openslides-icc-service/internal/notify"
 )
 
 func TestSend(t *testing.T) {
 	backend := newBackendStrub()
-	icc := icc.New(context.Background(), backend)
+	n := notify.New(context.Background(), backend)
 
 	t.Run("invalid json", func(t *testing.T) {
 		defer backend.reset()
 
-		err := icc.Send(strings.NewReader(`{123`), 1)
+		err := n.Publish(strings.NewReader(`{123`), 1)
 
 		if !errors.Is(err, iccerror.ErrInvalid) {
 			t.Errorf("send() returned err `%s`, expected `%s`", err, iccerror.ErrInvalid.Error())
@@ -30,7 +30,7 @@ func TestSend(t *testing.T) {
 	t.Run("invalid format", func(t *testing.T) {
 		defer backend.reset()
 
-		err := icc.Send(strings.NewReader(`{"to_users":1,"message":"hans"}`), 1)
+		err := n.Publish(strings.NewReader(`{"to_users":1,"message":"hans"}`), 1)
 
 		if !errors.Is(err, iccerror.ErrInvalid) {
 			t.Errorf("send() returned err `%s`, expected `%s`", err, iccerror.ErrInvalid.Error())
@@ -40,7 +40,7 @@ func TestSend(t *testing.T) {
 	t.Run("no channel_id", func(t *testing.T) {
 		defer backend.reset()
 
-		err := icc.Send(strings.NewReader(`
+		err := n.Publish(strings.NewReader(`
 		{
 			"to_users": [2], 
 			"message": "hans"
@@ -55,7 +55,7 @@ func TestSend(t *testing.T) {
 	t.Run("invalid channel_id", func(t *testing.T) {
 		defer backend.reset()
 
-		err := icc.Send(strings.NewReader(`
+		err := n.Publish(strings.NewReader(`
 		{
 			"channel_id": "abc",
 			"to_users": [2], 
@@ -70,7 +70,7 @@ func TestSend(t *testing.T) {
 	t.Run("no Name", func(t *testing.T) {
 		defer backend.reset()
 
-		err := icc.Send(strings.NewReader(`
+		err := n.Publish(strings.NewReader(`
 		{
 			"channel_id": "server:1:2",
 			"to_users": [2], 
@@ -85,7 +85,7 @@ func TestSend(t *testing.T) {
 	t.Run("valid", func(t *testing.T) {
 		defer backend.reset()
 
-		err := icc.Send(strings.NewReader(`
+		err := n.Publish(strings.NewReader(`
 		{
 			"channel_id": "server:1:2",
 			"name": "message-name",
@@ -110,7 +110,7 @@ func TestSend(t *testing.T) {
 
 func TestReceive(t *testing.T) {
 	backend := newBackendStrub()
-	icc := icc.New(context.Background(), backend)
+	n := notify.New(context.Background(), backend)
 
 	r, w := io.Pipe()
 	decoder := json.NewDecoder(r)
@@ -120,7 +120,7 @@ func TestReceive(t *testing.T) {
 
 	receiveDone := make(chan error, 1)
 	go func() {
-		receiveDone <- icc.Receive(ctx, w, 1, 2)
+		receiveDone <- n.Receive(ctx, w, 1, 2)
 	}()
 
 	t.Run("Get channel id", func(t *testing.T) {
@@ -137,62 +137,62 @@ func TestReceive(t *testing.T) {
 	})
 
 	t.Run("Get first message", func(t *testing.T) {
-		if err := icc.Send(strings.NewReader(`{"channel_id":"server:1:2","name":"message-name","to_users":[2],"message":"hans"}`), 1); err != nil {
+		if err := n.Publish(strings.NewReader(`{"channel_id":"server:1:2","name":"message-name","to_users":[2],"message":"hans"}`), 1); err != nil {
 			t.Fatalf("sending message: %v", err)
 		}
 
-		var iccMessage struct {
+		var notifyMessage struct {
 			SenderUserID    int             `json:"sender_user_id"`
 			SenderChannelID string          `json:"sender_channel_id"`
 			Name            string          `json:"name"`
 			Message         json.RawMessage `json:"message"`
 		}
-		if err := decoder.Decode(&iccMessage); err != nil {
+		if err := decoder.Decode(&notifyMessage); err != nil {
 			t.Errorf("decoding first message: %v", err)
 		}
 
-		if iccMessage.SenderUserID != 1 {
-			t.Errorf("message.sender_user_id == %d, expected 1", iccMessage.SenderUserID)
+		if notifyMessage.SenderUserID != 1 {
+			t.Errorf("message.sender_user_id == %d, expected 1", notifyMessage.SenderUserID)
 		}
 
-		if iccMessage.SenderChannelID != "server:1:2" {
-			t.Errorf("message.sender_channel_id == %s, expected server:1:2", iccMessage.SenderChannelID)
+		if notifyMessage.SenderChannelID != "server:1:2" {
+			t.Errorf("message.sender_channel_id == %s, expected server:1:2", notifyMessage.SenderChannelID)
 		}
 
-		if iccMessage.Name != "message-name" {
-			t.Errorf("message.name == %s, expected message-name", iccMessage.Name)
+		if notifyMessage.Name != "message-name" {
+			t.Errorf("message.name == %s, expected message-name", notifyMessage.Name)
 		}
 
-		if string(iccMessage.Message) != `"hans"` {
-			t.Errorf("message.message == %s, expected hans", iccMessage.Message)
+		if string(notifyMessage.Message) != `"hans"` {
+			t.Errorf("message.message == %s, expected hans", notifyMessage.Message)
 		}
 	})
 
 	t.Run("Message for meeting", func(t *testing.T) {
-		if err := icc.Send(strings.NewReader(`{"channel_id":"server:1:2","name":"to-meeting-name","to_meeting":1,"message":"klaus"}`), 1); err != nil {
+		if err := n.Publish(strings.NewReader(`{"channel_id":"server:1:2","name":"to-meeting-name","to_meeting":1,"message":"klaus"}`), 1); err != nil {
 			t.Fatalf("sending message: %v", err)
 		}
 
-		var iccMessage struct {
+		var notifyMessage struct {
 			ToMeeting int             `json:"to_meeting"`
 			Name      string          `json:"name"`
 			Message   json.RawMessage `json:"message"`
 		}
-		if err := decoder.Decode(&iccMessage); err != nil {
+		if err := decoder.Decode(&notifyMessage); err != nil {
 			t.Errorf("decoding first message: %v", err)
 		}
 
-		if iccMessage.Name != "to-meeting-name" {
-			t.Errorf("message.name == %s, expected to-meeting-name", iccMessage.Name)
+		if notifyMessage.Name != "to-meeting-name" {
+			t.Errorf("message.name == %s, expected to-meeting-name", notifyMessage.Name)
 		}
 
-		if string(iccMessage.Message) != `"klaus"` {
-			t.Errorf("message.message == %s, expected klaus", iccMessage.Message)
+		if string(notifyMessage.Message) != `"klaus"` {
+			t.Errorf("message.message == %s, expected klaus", notifyMessage.Message)
 		}
 	})
 
 	t.Run("Message not for me", func(t *testing.T) {
-		if err := icc.Send(strings.NewReader(`{"channel_id":"server:1:2","name":"message-name","to_users":[3],"message":"hans"}`), 1); err != nil {
+		if err := n.Publish(strings.NewReader(`{"channel_id":"server:1:2","name":"message-name","to_users":[3],"message":"hans"}`), 1); err != nil {
 			t.Fatalf("sending message: %v", err)
 		}
 
@@ -221,32 +221,3 @@ func TestReceive(t *testing.T) {
 		t.Fatalf("receive returned an unexpected error: %v", err)
 	}
 }
-
-// func TestApplause(t *testing.T) {
-// 	backend := newBackendStrub()
-// 	icc := New(context.Background(), backend)
-
-// 	r, w := io.Pipe()
-// 	decoder := json.NewDecoder(r)
-
-// 	ctx, cancel := context.WithCancel(context.Background())
-// 	defer cancel()
-
-// 	receiveDone := make(chan error, 1)
-// 	go func() {
-// 		receiveDone <- icc.Receive(ctx, w, 2)
-// 	}()
-
-// 	t.Run("Receive no applause at start", func(t *testing.T) {
-// 		var receive struct {
-// 			Applause int `json:"applause"`
-// 			Base     int `json:"base"`
-// 		}
-// 		if err := decoder.Decode(&receive); err != nil {
-// 			t.Fatalf("decoding first message: %v", err)
-// 		}
-
-// 		if receive
-
-// 	})
-// }

@@ -1,4 +1,4 @@
-package icc
+package notify
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// channelID is an id for a icc channel.
+// channelID is an id for a notify channel.
 type channelID string
 
 // uid returnes the user id that was used to create the channel id. Returns 0

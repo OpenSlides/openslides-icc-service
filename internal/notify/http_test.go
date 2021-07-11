@@ -1,4 +1,4 @@
-package icc_test
+package notify_test
 
 import (
 	"errors"
@@ -7,13 +7,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/OpenSlides/openslides-icc-service/internal/icc"
 	"github.com/OpenSlides/openslides-icc-service/internal/iccerror"
 	"github.com/OpenSlides/openslides-icc-service/internal/icctest"
+	"github.com/OpenSlides/openslides-icc-service/internal/notify"
 )
 
 func TestHandleReceive(t *testing.T) {
-	url := "/system/icc"
+	url := "/system/icc/notify"
 
 	t.Run("Anonymous", func(t *testing.T) {
 		auther := icctest.AutherStub{}
@@ -21,7 +21,7 @@ func TestHandleReceive(t *testing.T) {
 			expectedMessage: "my answer",
 		}
 		mux := http.NewServeMux()
-		icc.HandleReceive(mux, &receiver, &auther)
+		notify.HandleReceive(mux, &receiver, &auther)
 		resp := httptest.NewRecorder()
 
 		mux.ServeHTTP(resp, httptest.NewRequest("GET", url, nil))
@@ -47,7 +47,7 @@ func TestHandleReceive(t *testing.T) {
 			UserID: 1,
 		}
 		mux := http.NewServeMux()
-		icc.HandleReceive(mux, &receiver, &auther)
+		notify.HandleReceive(mux, &receiver, &auther)
 		resp := httptest.NewRecorder()
 
 		mux.ServeHTTP(resp, httptest.NewRequest("GET", url, nil))
@@ -73,7 +73,7 @@ func TestHandleReceive(t *testing.T) {
 			UserID: 1,
 		}
 		mux := http.NewServeMux()
-		icc.HandleReceive(mux, &receiver, &auther)
+		notify.HandleReceive(mux, &receiver, &auther)
 		resp := httptest.NewRecorder()
 
 		mux.ServeHTTP(resp, httptest.NewRequest("GET", url+"?meeting_id=5", nil))
@@ -104,7 +104,7 @@ func TestHandleReceive(t *testing.T) {
 			UserID: 1,
 		}
 		mux := http.NewServeMux()
-		icc.HandleReceive(mux, &receiver, &auther)
+		notify.HandleReceive(mux, &receiver, &auther)
 		resp := httptest.NewRecorder()
 
 		mux.ServeHTTP(resp, httptest.NewRequest("GET", url, nil))
@@ -127,7 +127,7 @@ func TestHandleReceive(t *testing.T) {
 			UserID: 1,
 		}
 		mux := http.NewServeMux()
-		icc.HandleReceive(mux, &receiver, &auther)
+		notify.HandleReceive(mux, &receiver, &auther)
 		resp := httptest.NewRecorder()
 
 		mux.ServeHTTP(resp, httptest.NewRequest("GET", url, nil))
@@ -143,13 +143,13 @@ func TestHandleReceive(t *testing.T) {
 }
 
 func TestHandleSend(t *testing.T) {
-	url := "/system/icc/send"
+	url := "/system/icc/notify/send"
 
 	t.Run("Anonymous", func(t *testing.T) {
 		auther := icctest.AutherStub{}
-		sender := senderStub{}
+		sender := publisherStub{}
 		mux := http.NewServeMux()
-		icc.HandleSend(mux, &sender, &auther)
+		notify.HandlePublish(mux, &sender, &auther)
 		resp := httptest.NewRecorder()
 
 		mux.ServeHTTP(resp, httptest.NewRequest("GET", url, nil))
@@ -171,9 +171,9 @@ func TestHandleSend(t *testing.T) {
 		auther := icctest.AutherStub{
 			UserID: 1,
 		}
-		sender := senderStub{}
+		sender := publisherStub{}
 		mux := http.NewServeMux()
-		icc.HandleSend(mux, &sender, &auther)
+		notify.HandlePublish(mux, &sender, &auther)
 		resp := httptest.NewRecorder()
 
 		mux.ServeHTTP(resp, httptest.NewRequest("GET", url, nil))
@@ -193,14 +193,14 @@ func TestHandleSend(t *testing.T) {
 
 	t.Run("Internal error", func(t *testing.T) {
 		myError := errors.New("Test error")
-		sender := senderStub{
+		sender := publisherStub{
 			expectedErr: myError,
 		}
 		auther := icctest.AutherStub{
 			UserID: 1,
 		}
 		mux := http.NewServeMux()
-		icc.HandleSend(mux, &sender, &auther)
+		notify.HandlePublish(mux, &sender, &auther)
 		resp := httptest.NewRecorder()
 
 		mux.ServeHTTP(resp, httptest.NewRequest("GET", url, nil))
