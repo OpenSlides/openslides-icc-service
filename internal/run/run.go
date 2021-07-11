@@ -48,7 +48,7 @@ func Run(ctx context.Context, environment []string, secret func(name string) (st
 
 	mux := http.NewServeMux()
 	notify.HandleReceive(mux, notifyService, auth)
-	notify.HandleSend(mux, notifyService, auth)
+	notify.HandlePublish(mux, notifyService, auth)
 
 	listenAddr := env["ICC_HOST"] + ":" + env["ICC_PORT"]
 	srv := &http.Server{Addr: listenAddr, Handler: mux}

@@ -147,9 +147,9 @@ func TestHandleSend(t *testing.T) {
 
 	t.Run("Anonymous", func(t *testing.T) {
 		auther := icctest.AutherStub{}
-		sender := senderStub{}
+		sender := publisherStub{}
 		mux := http.NewServeMux()
-		notify.HandleSend(mux, &sender, &auther)
+		notify.HandlePublish(mux, &sender, &auther)
 		resp := httptest.NewRecorder()
 
 		mux.ServeHTTP(resp, httptest.NewRequest("GET", url, nil))
@@ -171,9 +171,9 @@ func TestHandleSend(t *testing.T) {
 		auther := icctest.AutherStub{
 			UserID: 1,
 		}
-		sender := senderStub{}
+		sender := publisherStub{}
 		mux := http.NewServeMux()
-		notify.HandleSend(mux, &sender, &auther)
+		notify.HandlePublish(mux, &sender, &auther)
 		resp := httptest.NewRecorder()
 
 		mux.ServeHTTP(resp, httptest.NewRequest("GET", url, nil))
@@ -193,14 +193,14 @@ func TestHandleSend(t *testing.T) {
 
 	t.Run("Internal error", func(t *testing.T) {
 		myError := errors.New("Test error")
-		sender := senderStub{
+		sender := publisherStub{
 			expectedErr: myError,
 		}
 		auther := icctest.AutherStub{
 			UserID: 1,
 		}
 		mux := http.NewServeMux()
-		notify.HandleSend(mux, &sender, &auther)
+		notify.HandlePublish(mux, &sender, &auther)
 		resp := httptest.NewRecorder()
 
 		mux.ServeHTTP(resp, httptest.NewRequest("GET", url, nil))

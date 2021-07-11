@@ -52,15 +52,15 @@ func HandleReceive(mux *http.ServeMux, notify Receiver, auth icchttp.Authenticat
 	)
 }
 
-// Sender saves a notify message.
-type Sender interface {
-	Send(io.Reader, int) error
+// Publisher saves a notify message.
+type Publisher interface {
+	Publish(io.Reader, int) error
 }
 
-// HandleSend registers the notify/send route.
-func HandleSend(mux *http.ServeMux, notify Sender, auth icchttp.Authenticater) {
+// HandlePublish registers the notify/publish route.
+func HandlePublish(mux *http.ServeMux, notify Publisher, auth icchttp.Authenticater) {
 	mux.Handle(
-		icchttp.Path+"/notify/send",
+		icchttp.Path+"/notify/publish",
 		icchttp.AuthMiddleware(
 			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
@@ -68,12 +68,12 @@ func HandleSend(mux *http.ServeMux, notify Sender, auth icchttp.Authenticater) {
 				uid := auth.FromContext(r.Context())
 				if uid == 0 {
 					w.WriteHeader(401)
-					icchttp.ErrorNoStatus(w, iccerror.NewMessageError(iccerror.ErrNotAllowed, "Anonymous user can not send notify messages."))
+					icchttp.ErrorNoStatus(w, iccerror.NewMessageError(iccerror.ErrNotAllowed, "Anonymous user can not publish notify messages."))
 					return
 				}
 
-				if err := notify.Send(r.Body, uid); err != nil {
-					icchttp.Error(w, fmt.Errorf("saving notify message: %w", err))
+				if err := notify.Publish(r.Body, uid); err != nil {
+					icchttp.Error(w, fmt.Errorf("publish notify message: %w", err))
 					return
 				}
 			}),

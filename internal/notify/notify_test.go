@@ -20,7 +20,7 @@ func TestSend(t *testing.T) {
 	t.Run("invalid json", func(t *testing.T) {
 		defer backend.reset()
 
-		err := n.Send(strings.NewReader(`{123`), 1)
+		err := n.Publish(strings.NewReader(`{123`), 1)
 
 		if !errors.Is(err, iccerror.ErrInvalid) {
 			t.Errorf("send() returned err `%s`, expected `%s`", err, iccerror.ErrInvalid.Error())
@@ -30,7 +30,7 @@ func TestSend(t *testing.T) {
 	t.Run("invalid format", func(t *testing.T) {
 		defer backend.reset()
 
-		err := n.Send(strings.NewReader(`{"to_users":1,"message":"hans"}`), 1)
+		err := n.Publish(strings.NewReader(`{"to_users":1,"message":"hans"}`), 1)
 
 		if !errors.Is(err, iccerror.ErrInvalid) {
 			t.Errorf("send() returned err `%s`, expected `%s`", err, iccerror.ErrInvalid.Error())
@@ -40,7 +40,7 @@ func TestSend(t *testing.T) {
 	t.Run("no channel_id", func(t *testing.T) {
 		defer backend.reset()
 
-		err := n.Send(strings.NewReader(`
+		err := n.Publish(strings.NewReader(`
 		{
 			"to_users": [2], 
 			"message": "hans"
@@ -55,7 +55,7 @@ func TestSend(t *testing.T) {
 	t.Run("invalid channel_id", func(t *testing.T) {
 		defer backend.reset()
 
-		err := n.Send(strings.NewReader(`
+		err := n.Publish(strings.NewReader(`
 		{
 			"channel_id": "abc",
 			"to_users": [2], 
@@ -70,7 +70,7 @@ func TestSend(t *testing.T) {
 	t.Run("no Name", func(t *testing.T) {
 		defer backend.reset()
 
-		err := n.Send(strings.NewReader(`
+		err := n.Publish(strings.NewReader(`
 		{
 			"channel_id": "server:1:2",
 			"to_users": [2], 
@@ -85,7 +85,7 @@ func TestSend(t *testing.T) {
 	t.Run("valid", func(t *testing.T) {
 		defer backend.reset()
 
-		err := n.Send(strings.NewReader(`
+		err := n.Publish(strings.NewReader(`
 		{
 			"channel_id": "server:1:2",
 			"name": "message-name",
@@ -137,7 +137,7 @@ func TestReceive(t *testing.T) {
 	})
 
 	t.Run("Get first message", func(t *testing.T) {
-		if err := n.Send(strings.NewReader(`{"channel_id":"server:1:2","name":"message-name","to_users":[2],"message":"hans"}`), 1); err != nil {
+		if err := n.Publish(strings.NewReader(`{"channel_id":"server:1:2","name":"message-name","to_users":[2],"message":"hans"}`), 1); err != nil {
 			t.Fatalf("sending message: %v", err)
 		}
 
@@ -169,7 +169,7 @@ func TestReceive(t *testing.T) {
 	})
 
 	t.Run("Message for meeting", func(t *testing.T) {
-		if err := n.Send(strings.NewReader(`{"channel_id":"server:1:2","name":"to-meeting-name","to_meeting":1,"message":"klaus"}`), 1); err != nil {
+		if err := n.Publish(strings.NewReader(`{"channel_id":"server:1:2","name":"to-meeting-name","to_meeting":1,"message":"klaus"}`), 1); err != nil {
 			t.Fatalf("sending message: %v", err)
 		}
 
@@ -192,7 +192,7 @@ func TestReceive(t *testing.T) {
 	})
 
 	t.Run("Message not for me", func(t *testing.T) {
-		if err := n.Send(strings.NewReader(`{"channel_id":"server:1:2","name":"message-name","to_users":[3],"message":"hans"}`), 1); err != nil {
+		if err := n.Publish(strings.NewReader(`{"channel_id":"server:1:2","name":"message-name","to_users":[3],"message":"hans"}`), 1); err != nil {
 			t.Fatalf("sending message: %v", err)
 		}
 

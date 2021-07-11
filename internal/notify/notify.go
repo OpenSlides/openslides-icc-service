@@ -15,10 +15,10 @@ import (
 
 // Backend stores the notify messages.
 type Backend interface {
-	// SendNotify saves a valid notify message.
-	SendNotify([]byte) error
+	// NotifyPublish saves a valid notify message.
+	NotifyPublish([]byte) error
 
-	// ReceiveNotify is a blocking function that receives the messages.
+	// NotifyReceive is a blocking function that receives the messages.
 	//
 	// The first call returnes the first notify message, the next call the
 	// second an so on. If there are no more messages to read, the function
@@ -26,7 +26,7 @@ type Backend interface {
 	//
 	// It is expected, that only one goroutine is calling this function. The
 	// Backend keeps track what the last send message was.
-	ReceiveNotify(ctx context.Context) (message []byte, err error)
+	NotifyReceive(ctx context.Context) (message []byte, err error)
 }
 
 // Notify holds the state of the service.
@@ -54,7 +54,7 @@ func New(ctx context.Context, b Backend) *Notify {
 // topic.
 func (n *Notify) listen(ctx context.Context) {
 	for {
-		m, err := n.backend.ReceiveNotify(ctx)
+		m, err := n.backend.NotifyReceive(ctx)
 		if err != nil {
 			if errors.Is(err, context.Canceled) {
 				return
@@ -131,8 +131,8 @@ func (n *Notify) Receive(ctx context.Context, w io.Writer, meetingID, uid int) e
 	}
 }
 
-// Send reads and saves the notify event from the given reader.
-func (n *Notify) Send(r io.Reader, uid int) error {
+// Publish reads and saves the notify event from the given reader.
+func (n *Notify) Publish(r io.Reader, uid int) error {
 	var message notifyMessage
 	if err := json.NewDecoder(r).Decode(&message); err != nil {
 		return iccerror.NewMessageError(iccerror.ErrInvalid, "invalid json: %v", err)
@@ -148,8 +148,8 @@ func (n *Notify) Send(r io.Reader, uid int) error {
 	}
 
 	icclog.Debug("Saving notify message: `%s`", bs)
-	if err := n.backend.SendNotify(bs); err != nil {
-		return fmt.Errorf("sending message to backend: %w", err)
+	if err := n.backend.NotifyPublish(bs); err != nil {
+		return fmt.Errorf("saving message in backend: %w", err)
 	}
 
 	return nil

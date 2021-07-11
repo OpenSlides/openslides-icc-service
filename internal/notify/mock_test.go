@@ -24,13 +24,13 @@ func (r *receiverStub) Receive(ctx context.Context, w io.Writer, meetingID, uid 
 	return r.expectedErr
 }
 
-type senderStub struct {
+type publisherStub struct {
 	expectedErr  error
 	called       bool
 	calledUserID int
 }
 
-func (s *senderStub) Send(r io.Reader, uid int) error {
+func (s *publisherStub) Publish(r io.Reader, uid int) error {
 	s.called = true
 	s.calledUserID = uid
 	return s.expectedErr
@@ -58,13 +58,13 @@ func (b *backendStub) reset() {
 	}
 }
 
-func (b *backendStub) SendNotify(bs []byte) error {
+func (b *backendStub) NotifyPublish(bs []byte) error {
 	b.messages <- bs
 	b.receivedMessages = append(b.receivedMessages, bs)
 	return nil
 }
 
-func (b *backendStub) ReceiveNotify(ctx context.Context) (message []byte, err error) {
+func (b *backendStub) NotifyReceive(ctx context.Context) (message []byte, err error) {
 	select {
 	case m := <-b.messages:
 		return m, nil

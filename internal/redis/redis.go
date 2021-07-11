@@ -54,8 +54,8 @@ func (r *Redis) Wait(ctx context.Context) {
 	}
 }
 
-// SendNotify saves a valid notify message.
-func (r *Redis) SendNotify(message []byte) error {
+// NotifyPublish saves a valid notify message.
+func (r *Redis) NotifyPublish(message []byte) error {
 	conn := r.pool.Get()
 	defer conn.Close()
 
@@ -66,14 +66,14 @@ func (r *Redis) SendNotify(message []byte) error {
 	return nil
 }
 
-// ReceiveNotify is a blocking function that receives the messages.
+// NotifyReceive is a blocking function that receives the messages.
 //
 // The first call returnes the first notify message, the next call the second an
 // so on. If there are no more messages to read, the function blocks until there
 // is or the context ist canceled.
 //
 // It is expected, that only one goroutine is calling this function.
-func (r *Redis) ReceiveNotify(ctx context.Context) ([]byte, error) {
+func (r *Redis) NotifyReceive(ctx context.Context) ([]byte, error) {
 	id := r.lastNotifyID
 	if id == "" {
 		id = "$"
@@ -113,9 +113,9 @@ func (r *Redis) ReceiveNotify(ctx context.Context) ([]byte, error) {
 	return received.data, nil
 }
 
-// SendApplause saves an applause for the user at a given time as unix time
+// ApplausePublish saves an applause for the user at a given time as unix time
 // stamp.
-func (r *Redis) SendApplause(userID int, time int64) error {
+func (r *Redis) ApplausePublish(userID int, time int64) error {
 	conn := r.pool.Get()
 	defer conn.Close()
 
@@ -126,8 +126,8 @@ func (r *Redis) SendApplause(userID int, time int64) error {
 	return nil
 }
 
-// ReceiveApplause returned all applause since a given time as unix time stamp.
-func (r *Redis) ReceiveApplause(since int64) (int, error) {
+// ApplauseReceive returned all applause since a given time as unix time stamp.
+func (r *Redis) ApplauseReceive(since int64) (int, error) {
 	conn := r.pool.Get()
 	defer conn.Close()
 
@@ -139,8 +139,8 @@ func (r *Redis) ReceiveApplause(since int64) (int, error) {
 	return n, nil
 }
 
-// DeleteOldApplause removes applause that is older then a given time.
-func (r *Redis) DeleteOldApplause(olderThen int64) error {
+// ApplauseCleanOld removes applause that is older then a given time.
+func (r *Redis) ApplauseCleanOld(olderThen int64) error {
 	conn := r.pool.Get()
 	defer conn.Close()
 
