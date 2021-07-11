@@ -143,7 +143,7 @@ func TestHandleReceive(t *testing.T) {
 }
 
 func TestHandleSend(t *testing.T) {
-	url := "/system/icc/notify/send"
+	url := "/system/icc/notify/publish"
 
 	t.Run("Anonymous", func(t *testing.T) {
 		auther := icctest.AutherStub{}
