@@ -78,41 +78,41 @@ Curl needs the flag `-N / --no-buffer` or it can happen, that the output is not
 printed immediately.
 
 
-### ICC 
+### Notify
 
 To listen to messages, you can use this command:
 
 ```
-curl -N localhot:9013/system/icc?meeting_id=5
+curl -N localhot:9013/system/icc/notify?meeting_id=5
 ```
 
 The meeting_id query argument is optional.
 
 The output has the [json lines](https://jsonlines.org/) format.
 
-The first line returns an individual channel-id. It has to be used later so send
-messages:
+The first line returns an individual channel-id. It has to be used later so
+publish messages:
 
 ```
 {"channel_id": "QRboMVjb:1:0"}
 ```
 
-Each other other line is one ICC message. It has the following format:
+Each other other line is one notify message. It has the following format:
 
 ```
 {"sender_user_id":1,"sender_channel_id":"8NWRQy18:1:0","name":"my message title","message":"my message"}
 ```
 
-To send a message, you can use the following request:
+To publish a message, you can use the following request:
 
 ```
-curl localhost:9013/system/icc/send -d '{
+curl localhost:9013/system/icc/notify/publish -d '{
   "channel_id": "STRING_SEE_ABOVE",
   "to_meeting": 5,
   "to_users": [3,4],
   "to_channels": "some:valid:channel_id",
   "name": "my message title",
-  "message": {"any":"valid","json":true}
+  "message": {"any":"valid","json":"data"}
 }'
 ```
 
