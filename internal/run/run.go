@@ -47,6 +47,7 @@ func Run(ctx context.Context, environment []string, secret func(name string) (st
 	notifyService := notify.New(ctx, backend)
 
 	mux := http.NewServeMux()
+	icchttp.HandleHealth(mux)
 	notify.HandleReceive(mux, notifyService, auth)
 	notify.HandlePublish(mux, notifyService, auth)
 
