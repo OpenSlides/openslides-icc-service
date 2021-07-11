@@ -112,19 +112,24 @@ func TestSend(t *testing.T) {
 }
 
 func TestReceive(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
+	testCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	backend := newBackendStrub()
-	n := notify.New(ctx, backend)
+	n := notify.New(testCtx, backend)
 
 	r, w := io.Pipe()
 	decoder := json.NewDecoder(r)
 
+	receiveCtx, receiveCtxCancel := context.WithCancel(testCtx)
+
 	receiveDone := make(chan error, 1)
 	go func() {
-		receiveDone <- n.Receive(ctx, w, 1, 2)
+		receiveDone <- n.Receive(receiveCtx, w, 1, 2)
 	}()
+
+	// Make sure the receive call is ready
+	time.Sleep(time.Millisecond)
 
 	t.Run("Get channel id", func(t *testing.T) {
 		var firstMessage struct {
@@ -217,7 +222,7 @@ func TestReceive(t *testing.T) {
 		}
 	})
 
-	cancel()
+	receiveCtxCancel()
 	err := <-receiveDone
 
 	if !errors.Is(err, context.Canceled) {
