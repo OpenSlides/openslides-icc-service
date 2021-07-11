@@ -14,8 +14,11 @@ import (
 )
 
 func TestSend(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	backend := newBackendStrub()
-	n := notify.New(context.Background(), backend)
+	n := notify.New(ctx, backend)
 
 	t.Run("invalid json", func(t *testing.T) {
 		defer backend.reset()
@@ -109,14 +112,14 @@ func TestSend(t *testing.T) {
 }
 
 func TestReceive(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	backend := newBackendStrub()
-	n := notify.New(context.Background(), backend)
+	n := notify.New(ctx, backend)
 
 	r, w := io.Pipe()
 	decoder := json.NewDecoder(r)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	receiveDone := make(chan error, 1)
 	go func() {
