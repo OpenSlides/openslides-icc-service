@@ -1,4 +1,4 @@
-package icc_test
+package notify_test
 
 import (
 	"context"
@@ -9,13 +9,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/OpenSlides/openslides-icc-service/internal/icc"
 	"github.com/OpenSlides/openslides-icc-service/internal/iccerror"
+	"github.com/OpenSlides/openslides-icc-service/internal/notify"
 )
 
 func TestSend(t *testing.T) {
 	backend := newBackendStrub()
-	icc := icc.New(context.Background(), backend)
+	icc := notify.New(context.Background(), backend)
 
 	t.Run("invalid json", func(t *testing.T) {
 		defer backend.reset()
@@ -110,7 +110,7 @@ func TestSend(t *testing.T) {
 
 func TestReceive(t *testing.T) {
 	backend := newBackendStrub()
-	icc := icc.New(context.Background(), backend)
+	icc := notify.New(context.Background(), backend)
 
 	r, w := io.Pipe()
 	decoder := json.NewDecoder(r)

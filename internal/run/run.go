@@ -9,9 +9,9 @@ import (
 
 	"github.com/OpenSlides/openslides-autoupdate-service/pkg/auth"
 	messageBusRedis "github.com/OpenSlides/openslides-autoupdate-service/pkg/redis"
-	"github.com/OpenSlides/openslides-icc-service/internal/icc"
 	"github.com/OpenSlides/openslides-icc-service/internal/icchttp"
 	"github.com/OpenSlides/openslides-icc-service/internal/icclog"
+	"github.com/OpenSlides/openslides-icc-service/internal/notify"
 	"github.com/OpenSlides/openslides-icc-service/internal/redis"
 )
 
@@ -44,11 +44,11 @@ func Run(ctx context.Context, environment []string, secret func(name string) (st
 
 	backend := redis.New(env["ICC_REDIS_HOST"] + ":" + env["ICC_REDIS_PORT"])
 
-	service := icc.New(ctx, backend)
+	notifyService := notify.New(ctx, backend)
 
 	mux := http.NewServeMux()
-	icc.HandleReceive(mux, service, auth)
-	icc.HandleSend(mux, service, auth)
+	notify.HandleReceive(mux, notifyService, auth)
+	notify.HandleSend(mux, notifyService, auth)
 
 	listenAddr := env["ICC_HOST"] + ":" + env["ICC_PORT"]
 	srv := &http.Server{Addr: listenAddr, Handler: mux}

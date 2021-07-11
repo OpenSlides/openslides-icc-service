@@ -1,4 +1,4 @@
-package icc_test
+package notify_test
 
 import (
 	"context"

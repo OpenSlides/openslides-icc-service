@@ -1,4 +1,4 @@
-package icc
+package notify
 
 import (
 	"context"
