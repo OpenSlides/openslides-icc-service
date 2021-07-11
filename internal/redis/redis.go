@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	// iccKey is the name of the icc stream name.
-	iccKey = "icc"
+	// notifyKey is the name of the icc stream name.
+	notifyKey = "icc-notify"
 
 	// applauseKey is the name of the redis key for applause.
 	applauseKey = "applause"
@@ -21,8 +21,8 @@ const (
 //
 // Has to be created with redis.New().
 type Redis struct {
-	pool      *redis.Pool
-	lastICCID string
+	pool         *redis.Pool
+	lastNotifyID string
 }
 
 // New creates a new initializes redis instance.
@@ -54,27 +54,27 @@ func (r *Redis) Wait(ctx context.Context) {
 	}
 }
 
-// SendICC saves a valid icc message.
-func (r *Redis) SendICC(message []byte) error {
+// SendNotify saves a valid notify message.
+func (r *Redis) SendNotify(message []byte) error {
 	conn := r.pool.Get()
 	defer conn.Close()
 
-	_, err := conn.Do("XADD", iccKey, "*", "content", message)
+	_, err := conn.Do("XADD", notifyKey, "*", "content", message)
 	if err != nil {
 		return fmt.Errorf("xadd: %w", err)
 	}
 	return nil
 }
 
-// ReceiveICC is a blocking function that receives the messages.
+// ReceiveNotify is a blocking function that receives the messages.
 //
-// The first call returnes the first icc message, the next call the second
-// an so on. If there are no more messages to read, the function blocks
-// until there is or the context ist canceled.
+// The first call returnes the first notify message, the next call the second an
+// so on. If there are no more messages to read, the function blocks until there
+// is or the context ist canceled.
 //
 // It is expected, that only one goroutine is calling this function.
-func (r *Redis) ReceiveICC(ctx context.Context) ([]byte, error) {
-	id := r.lastICCID
+func (r *Redis) ReceiveNotify(ctx context.Context) ([]byte, error) {
+	id := r.lastNotifyID
 	if id == "" {
 		id = "$"
 	}
@@ -91,7 +91,7 @@ func (r *Redis) ReceiveICC(ctx context.Context) ([]byte, error) {
 		conn := r.pool.Get()
 		defer conn.Close()
 
-		id, data, err := stream(conn.Do("XREAD", "COUNT", 1, "BLOCK", "0", "STREAMS", iccKey, id))
+		id, data, err := stream(conn.Do("XREAD", "COUNT", 1, "BLOCK", "0", "STREAMS", notifyKey, id))
 		streamFinished <- streamReturn{id, data, err}
 	}()
 
@@ -103,11 +103,11 @@ func (r *Redis) ReceiveICC(ctx context.Context) ([]byte, error) {
 	}
 
 	if received.id != "" {
-		r.lastICCID = id
+		r.lastNotifyID = id
 	}
 
 	if err := received.err; err != nil {
-		return nil, fmt.Errorf("read icc message from redis: %w", err)
+		return nil, fmt.Errorf("read notify message from redis: %w", err)
 	}
 
 	return received.data, nil

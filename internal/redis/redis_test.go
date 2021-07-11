@@ -43,7 +43,7 @@ func TestICC(t *testing.T) {
 
 		done := make(chan error)
 		go func() {
-			_, err := r.ReceiveICC(ctx)
+			_, err := r.ReceiveNotify(ctx)
 			done <- err
 		}()
 
@@ -62,7 +62,7 @@ func TestICC(t *testing.T) {
 
 		done := make(chan error)
 		go func() {
-			_, err := r.ReceiveICC(ctx)
+			_, err := r.ReceiveNotify(ctx)
 			done <- err
 		}()
 
@@ -91,14 +91,14 @@ func TestICC(t *testing.T) {
 
 		done := make(chan receiveReturn)
 		go func() {
-			message, err := r.ReceiveICC(ctx)
+			message, err := r.ReceiveNotify(ctx)
 			done <- receiveReturn{message, err}
 		}()
 
 		// Wait for ReceiveICC to be called.
 		time.Sleep(10 * time.Millisecond)
 
-		r.SendICC([]byte("my message"))
+		r.SendNotify([]byte("my message"))
 
 		timer := time.NewTimer(50 * time.Millisecond)
 		defer timer.Stop()

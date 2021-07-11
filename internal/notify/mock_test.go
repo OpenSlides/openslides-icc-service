@@ -58,13 +58,13 @@ func (b *backendStub) reset() {
 	}
 }
 
-func (b *backendStub) SendICC(bs []byte) error {
+func (b *backendStub) SendNotify(bs []byte) error {
 	b.messages <- bs
 	b.receivedMessages = append(b.receivedMessages, bs)
 	return nil
 }
 
-func (b *backendStub) ReceiveICC(ctx context.Context) (message []byte, err error) {
+func (b *backendStub) ReceiveNotify(ctx context.Context) (message []byte, err error) {
 	select {
 	case m := <-b.messages:
 		return m, nil

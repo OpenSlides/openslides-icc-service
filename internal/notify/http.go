@@ -12,15 +12,15 @@ import (
 )
 
 // Receiver is a type with the function Receive(). It is a blocking function
-// that writes the icc-messages to the writer as soon as they occur.
+// that writes the notify-messages to the writer as soon as they occur.
 type Receiver interface {
 	Receive(ctx context.Context, w io.Writer, meetingID, uid int) error
 }
 
-// HandleReceive registers the icc route.
-func HandleReceive(mux *http.ServeMux, icc Receiver, auth icchttp.Authenticater) {
+// HandleReceive registers the notify route.
+func HandleReceive(mux *http.ServeMux, notify Receiver, auth icchttp.Authenticater) {
 	mux.Handle(
-		icchttp.Path,
+		icchttp.Path+"/notify",
 		icchttp.AuthMiddleware(
 			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/octet-stream")
@@ -28,7 +28,7 @@ func HandleReceive(mux *http.ServeMux, icc Receiver, auth icchttp.Authenticater)
 				uid := auth.FromContext(r.Context())
 				if uid == 0 {
 					w.WriteHeader(401)
-					icchttp.ErrorNoStatus(w, iccerror.NewMessageError(iccerror.ErrNotAllowed, "Anonymous user can not receive icc messages."))
+					icchttp.ErrorNoStatus(w, iccerror.NewMessageError(iccerror.ErrNotAllowed, "Anonymous user can not receive notify messages."))
 					return
 				}
 
@@ -42,8 +42,8 @@ func HandleReceive(mux *http.ServeMux, icc Receiver, auth icchttp.Authenticater)
 					}
 				}
 
-				if err := icc.Receive(r.Context(), w, meetingID, uid); err != nil {
-					icchttp.ErrorNoStatus(w, fmt.Errorf("receiving icc messages: %w", err))
+				if err := notify.Receive(r.Context(), w, meetingID, uid); err != nil {
+					icchttp.ErrorNoStatus(w, fmt.Errorf("receiving notify messages: %w", err))
 					return
 				}
 			}),
@@ -52,15 +52,15 @@ func HandleReceive(mux *http.ServeMux, icc Receiver, auth icchttp.Authenticater)
 	)
 }
 
-// Sender saves a icc message.
+// Sender saves a notify message.
 type Sender interface {
 	Send(io.Reader, int) error
 }
 
-// HandleSend registers the icc/send route.
-func HandleSend(mux *http.ServeMux, icc Sender, auth icchttp.Authenticater) {
+// HandleSend registers the notify/send route.
+func HandleSend(mux *http.ServeMux, notify Sender, auth icchttp.Authenticater) {
 	mux.Handle(
-		icchttp.Path+"/send",
+		icchttp.Path+"/notify/send",
 		icchttp.AuthMiddleware(
 			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
@@ -68,12 +68,12 @@ func HandleSend(mux *http.ServeMux, icc Sender, auth icchttp.Authenticater) {
 				uid := auth.FromContext(r.Context())
 				if uid == 0 {
 					w.WriteHeader(401)
-					icchttp.ErrorNoStatus(w, iccerror.NewMessageError(iccerror.ErrNotAllowed, "Anonymous user can not send icc messages."))
+					icchttp.ErrorNoStatus(w, iccerror.NewMessageError(iccerror.ErrNotAllowed, "Anonymous user can not send notify messages."))
 					return
 				}
 
-				if err := icc.Send(r.Body, uid); err != nil {
-					icchttp.Error(w, fmt.Errorf("saving icc message: %w", err))
+				if err := notify.Send(r.Body, uid); err != nil {
+					icchttp.Error(w, fmt.Errorf("saving notify message: %w", err))
 					return
 				}
 			}),
