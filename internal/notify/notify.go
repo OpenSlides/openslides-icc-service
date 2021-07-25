@@ -70,70 +70,28 @@ func (n *Notify) listen(ctx context.Context) {
 	}
 }
 
-type flusher interface {
-	Flush()
-}
+// NextMessage is a function that can be called to get the next message.
+type NextMessage func(context.Context) (OutMessage, error)
 
-// Receive is a blocking function that sends data to w as soon as an notify
-// event happens.
-func (n *Notify) Receive(ctx context.Context, w io.Writer, meetingID, uid int) error {
-	cid := n.cIDGen.generate(uid)
+// Receive returns an individuel channel id and a channel to receive messages
+// from.
+func (n *Notify) Receive(meetingID, uid int) (cid string, nm NextMessage) {
+	channelID := n.cIDGen.generate(uid)
 
-	if _, err := fmt.Fprintf(w, `{"channel_id": "%s"}`+"\n", cid); err != nil {
-		return fmt.Errorf("sending channel id: %w", err)
+	mp := messageProvider{
+		tid:       n.topic.LastID(),
+		uid:       uid,
+		meetingID: meetingID,
+		channelID: channelID,
+		topic:     n.topic,
 	}
 
-	if f, ok := w.(flusher); ok {
-		f.Flush()
-	}
-
-	encoder := json.NewEncoder(w)
-	tid := n.topic.LastID()
-	var messages []string
-	var err error
-	for {
-		tid, messages, err = n.topic.Receive(ctx, tid)
-		if err != nil {
-			return fmt.Errorf("fetching message from topic: %w", err)
-		}
-
-		for _, message := range messages {
-			var m notifyMessage
-			if err := json.Unmarshal([]byte(message), &m); err != nil {
-				return fmt.Errorf("decoding message: %w", err)
-			}
-
-			if !m.forMe(meetingID, uid, cid) {
-				continue
-			}
-
-			out := struct {
-				SenderUserID    int             `json:"sender_user_id"`
-				SenderChannelID string          `json:"sender_channel_id"`
-				Name            string          `json:"name"`
-				Message         json.RawMessage `json:"message"`
-			}{
-				m.ChannelID.uid(),
-				m.ChannelID.String(),
-				m.Name,
-				m.Message,
-			}
-
-			if err := encoder.Encode(out); err != nil {
-				return fmt.Errorf("sending message: %w", err)
-			}
-
-		}
-
-		if f, ok := w.(flusher); ok {
-			f.Flush()
-		}
-	}
+	return channelID.String(), mp.Next
 }
 
 // Publish reads and saves the notify event from the given reader.
 func (n *Notify) Publish(r io.Reader, uid int) error {
-	var message notifyMessage
+	var message Message
 	if err := json.NewDecoder(r).Decode(&message); err != nil {
 		return iccerror.NewMessageError(iccerror.ErrInvalid, "invalid json: %v", err)
 	}
@@ -155,7 +113,7 @@ func (n *Notify) Publish(r io.Reader, uid int) error {
 	return nil
 }
 
-func validateMessage(message notifyMessage, userID int) error {
+func validateMessage(message Message, userID int) error {
 	if message.ChannelID.uid() != userID {
 		return iccerror.NewMessageError(iccerror.ErrInvalid, "invalid channel id `%s`", message.ChannelID)
 	}
@@ -167,7 +125,8 @@ func validateMessage(message notifyMessage, userID int) error {
 	return nil
 }
 
-type notifyMessage struct {
+// Message is a message from the one client to all/some others.
+type Message struct {
 	ChannelID  channelID       `json:"channel_id"`
 	ToMeeting  int             `json:"to_meeting,omitempty"`
 	ToUsers    []int           `json:"to_users,omitempty"`
@@ -176,7 +135,7 @@ type notifyMessage struct {
 	Message    json.RawMessage `json:"message"`
 }
 
-func (m notifyMessage) forMe(meetingID, uid int, cID channelID) bool {
+func (m Message) forMe(meetingID, uid int, cID channelID) bool {
 	if m.ToMeeting != 0 && m.ToMeeting == meetingID {
 		return true
 	}
@@ -193,4 +152,57 @@ func (m notifyMessage) forMe(meetingID, uid int, cID channelID) bool {
 		}
 	}
 	return false
+}
+
+// OutMessage is a message that is going out of the service.
+type OutMessage struct {
+	SenderUserID    int             `json:"sender_user_id"`
+	SenderChannelID string          `json:"sender_channel_id"`
+	Name            string          `json:"name"`
+	Message         json.RawMessage `json:"message"`
+}
+
+// messageProvider returns messages by calling Next().
+type messageProvider struct {
+	tid       uint64
+	uid       int
+	meetingID int
+	channelID channelID
+
+	topic      *topic.Topic
+	messageBuf []string
+}
+
+// Next returns the next message. Can be called many times.
+func (mp *messageProvider) Next(ctx context.Context) (OutMessage, error) {
+	if len(mp.messageBuf) == 0 {
+		tid, messages, err := mp.topic.Receive(ctx, mp.tid)
+		if err != nil {
+			return OutMessage{}, fmt.Errorf("fetching message from topic: %w", err)
+		}
+
+		mp.tid = tid
+		mp.messageBuf = messages
+	}
+
+	message := mp.messageBuf[0]
+	mp.messageBuf = mp.messageBuf[1:]
+
+	var m Message
+	if err := json.Unmarshal([]byte(message), &m); err != nil {
+		return OutMessage{}, fmt.Errorf("decoding message: %w", err)
+	}
+
+	if !m.forMe(mp.meetingID, mp.uid, mp.channelID) {
+		return mp.Next(ctx)
+	}
+
+	out := OutMessage{
+		m.ChannelID.uid(),
+		m.ChannelID.String(),
+		m.Name,
+		m.Message,
+	}
+
+	return out, nil
 }

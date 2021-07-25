@@ -1,7 +1,7 @@
 package notify
 
 import (
-	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,41 +14,59 @@ import (
 // Receiver is a type with the function Receive(). It is a blocking function
 // that writes the notify-messages to the writer as soon as they occur.
 type Receiver interface {
-	Receive(ctx context.Context, w io.Writer, meetingID, uid int) error
+	Receive(meetingID, uid int) (cid string, mp NextMessage)
 }
 
 // HandleReceive registers the notify route.
 func HandleReceive(mux *http.ServeMux, notify Receiver, auth icchttp.Authenticater) {
+	url := icchttp.Path + "/notify"
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/octet-stream")
+
+		uid := auth.FromContext(r.Context())
+		if uid == 0 {
+			w.WriteHeader(401)
+			icchttp.ErrorNoStatus(w, iccerror.NewMessageError(iccerror.ErrNotAllowed, "Anonymous user can not receive notify messages."))
+			return
+		}
+
+		vars := r.URL.Query()["meeting_id"]
+		meetingID := 0
+		if len(vars) != 0 {
+			var err error
+			meetingID, err = strconv.Atoi(vars[0])
+			if err != nil {
+				icchttp.Error(w, iccerror.NewMessageError(iccerror.ErrInvalid, "url query meeting_id has to be an int"))
+				return
+			}
+		}
+
+		cid, next := notify.Receive(meetingID, uid)
+
+		// Send channel id.
+		if _, err := fmt.Fprintf(w, `{"channel_id": "%s"}`+"\n", cid); err != nil {
+			return
+		}
+
+		encoder := json.NewEncoder(w)
+
+		for {
+			message, err := next(r.Context())
+			if err != nil {
+				icchttp.ErrorNoStatus(w, fmt.Errorf("receiving message: %w", err))
+				return
+			}
+
+			if err := encoder.Encode(message); err != nil {
+				icchttp.ErrorNoStatus(w, fmt.Errorf("sending message: %w", err))
+				return
+			}
+		}
+	})
+
 	mux.Handle(
-		icchttp.Path+"/notify",
-		icchttp.AuthMiddleware(
-			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.Header().Set("Content-Type", "application/octet-stream")
-
-				uid := auth.FromContext(r.Context())
-				if uid == 0 {
-					w.WriteHeader(401)
-					icchttp.ErrorNoStatus(w, iccerror.NewMessageError(iccerror.ErrNotAllowed, "Anonymous user can not receive notify messages."))
-					return
-				}
-
-				vars := r.URL.Query()["meeting_id"]
-				meetingID := 0
-				if len(vars) != 0 {
-					var err error
-					meetingID, err = strconv.Atoi(vars[0])
-					if err != nil {
-						icchttp.Error(w, iccerror.NewMessageError(iccerror.ErrInvalid, "url query meeting_id has to be an int"))
-					}
-				}
-
-				if err := notify.Receive(r.Context(), w, meetingID, uid); err != nil {
-					icchttp.ErrorNoStatus(w, fmt.Errorf("receiving notify messages: %w", err))
-					return
-				}
-			}),
-			auth,
-		),
+		url,
+		icchttp.AuthMiddleware(handler, auth),
 	)
 }
 

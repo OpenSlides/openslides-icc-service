@@ -2,26 +2,55 @@ package notify_test
 
 import (
 	"context"
-	"fmt"
 	"io"
+
+	"github.com/OpenSlides/openslides-icc-service/internal/notify"
 )
 
+type messageProviderStub struct {
+	nm  chan notify.OutMessage
+	err chan error
+}
+
+func newMessageProviderStub() *messageProviderStub {
+	return &messageProviderStub{
+		nm:  make(chan notify.OutMessage, 1),
+		err: make(chan error, 1),
+	}
+}
+
+func (mp *messageProviderStub) Next(ctx context.Context) (notify.OutMessage, error) {
+	select {
+	case m := <-mp.nm:
+		return m, nil
+	case err := <-mp.err:
+		return notify.OutMessage{}, err
+	case <-ctx.Done():
+		return notify.OutMessage{}, ctx.Err()
+	}
+}
+
+func (mp *messageProviderStub) Send(m notify.OutMessage) {
+	mp.nm <- m
+}
+
+func (mp *messageProviderStub) SendError(err error) {
+	mp.err <- err
+}
+
 type receiverStub struct {
-	expectedMessage  string
-	expectedErr      error
+	cid string
+	nm  notify.NextMessage
+
 	called           bool
 	callledMeetingID int
 }
 
-func (r *receiverStub) Receive(ctx context.Context, w io.Writer, meetingID, uid int) error {
+func (r *receiverStub) Receive(meetingID, uid int) (cid string, nm notify.NextMessage) {
 	r.called = true
 	r.callledMeetingID = meetingID
 
-	if _, err := w.Write([]byte(r.expectedMessage)); err != nil {
-		return fmt.Errorf("writing first message: %w", err)
-	}
-
-	return r.expectedErr
+	return r.cid, r.nm
 }
 
 type publisherStub struct {

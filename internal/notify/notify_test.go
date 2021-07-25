@@ -2,9 +2,7 @@ package notify_test
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"io"
 	"strings"
 	"testing"
 	"time"
@@ -118,45 +116,16 @@ func TestReceive(t *testing.T) {
 	backend := newBackendStrub()
 	n := notify.New(testCtx, backend)
 
-	r, w := io.Pipe()
-	decoder := json.NewDecoder(r)
-
-	receiveCtx, receiveCtxCancel := context.WithCancel(testCtx)
-
-	receiveDone := make(chan error, 1)
-	go func() {
-		receiveDone <- n.Receive(receiveCtx, w, 1, 2)
-	}()
-
-	// Make sure the receive call is ready
-	time.Sleep(time.Millisecond)
-
-	t.Run("Get channel id", func(t *testing.T) {
-		var firstMessage struct {
-			ChannelID string `json:"channel_id"`
-		}
-		if err := decoder.Decode(&firstMessage); err != nil {
-			t.Errorf("decoding first message: %v", err)
-		}
-
-		if firstMessage.ChannelID == "" {
-			t.Errorf("first message did not have a channelID")
-		}
-	})
+	_, next := n.Receive(1, 2)
 
 	t.Run("Get first message", func(t *testing.T) {
 		if err := n.Publish(strings.NewReader(`{"channel_id":"server:1:2","name":"message-name","to_users":[2],"message":"hans"}`), 1); err != nil {
 			t.Fatalf("sending message: %v", err)
 		}
 
-		var notifyMessage struct {
-			SenderUserID    int             `json:"sender_user_id"`
-			SenderChannelID string          `json:"sender_channel_id"`
-			Name            string          `json:"name"`
-			Message         json.RawMessage `json:"message"`
-		}
-		if err := decoder.Decode(&notifyMessage); err != nil {
-			t.Errorf("decoding first message: %v", err)
+		notifyMessage, err := next(context.Background())
+		if err != nil {
+			t.Fatalf("Next() returned: %v", err)
 		}
 
 		if notifyMessage.SenderUserID != 1 {
@@ -181,13 +150,9 @@ func TestReceive(t *testing.T) {
 			t.Fatalf("sending message: %v", err)
 		}
 
-		var notifyMessage struct {
-			ToMeeting int             `json:"to_meeting"`
-			Name      string          `json:"name"`
-			Message   json.RawMessage `json:"message"`
-		}
-		if err := decoder.Decode(&notifyMessage); err != nil {
-			t.Errorf("decoding first message: %v", err)
+		notifyMessage, err := next(context.Background())
+		if err != nil {
+			t.Fatalf("Next() returned: %v", err)
 		}
 
 		if notifyMessage.Name != "to-meeting-name" {
@@ -204,28 +169,21 @@ func TestReceive(t *testing.T) {
 			t.Fatalf("sending message: %v", err)
 		}
 
-		done := make(chan struct{})
-		var v interface{}
+		done := make(chan error)
 		go func() {
-			if err := decoder.Decode(&v); err != nil {
-				t.Errorf("decoding message for other user: %v", err)
-			}
-			close(done)
+			_, err := next(context.Background())
+			done <- err
 		}()
 
 		timer := time.NewTimer(10 * time.Millisecond)
 		defer timer.Stop()
 		select {
-		case <-done:
-			t.Errorf("decoded an unexpected message: %v", v)
+		case err := <-done:
+			if err != nil {
+				t.Fatalf("Next returned unexpected error: %v", err)
+			}
+			t.Errorf("decoded an unexpected message")
 		case <-timer.C:
 		}
 	})
-
-	receiveCtxCancel()
-	err := <-receiveDone
-
-	if !errors.Is(err, context.Canceled) {
-		t.Fatalf("receive returned an unexpected error: %v", err)
-	}
 }
