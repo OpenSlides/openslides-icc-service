@@ -175,33 +175,36 @@ type messageProvider struct {
 
 // Next returns the next message. Can be called many times.
 func (mp *messageProvider) Next(ctx context.Context) (OutMessage, error) {
-	if len(mp.messageBuf) == 0 {
-		tid, messages, err := mp.topic.Receive(ctx, mp.tid)
-		if err != nil {
-			return OutMessage{}, fmt.Errorf("fetching message from topic: %w", err)
+	var message Message
+
+	for {
+		if len(mp.messageBuf) == 0 {
+			tid, messages, err := mp.topic.Receive(ctx, mp.tid)
+			if err != nil {
+				return OutMessage{}, fmt.Errorf("fetching message from topic: %w", err)
+			}
+
+			mp.tid = tid
+			mp.messageBuf = messages
 		}
 
-		mp.tid = tid
-		mp.messageBuf = messages
-	}
+		m := mp.messageBuf[0]
+		mp.messageBuf = mp.messageBuf[1:]
 
-	message := mp.messageBuf[0]
-	mp.messageBuf = mp.messageBuf[1:]
+		if err := json.Unmarshal([]byte(m), &message); err != nil {
+			return OutMessage{}, fmt.Errorf("decoding message: %w", err)
+		}
 
-	var m Message
-	if err := json.Unmarshal([]byte(message), &m); err != nil {
-		return OutMessage{}, fmt.Errorf("decoding message: %w", err)
-	}
-
-	if !m.forMe(mp.meetingID, mp.uid, mp.channelID) {
-		return mp.Next(ctx)
+		if message.forMe(mp.meetingID, mp.uid, mp.channelID) {
+			break
+		}
 	}
 
 	out := OutMessage{
-		m.ChannelID.uid(),
-		m.ChannelID.String(),
-		m.Name,
-		m.Message,
+		message.ChannelID.uid(),
+		message.ChannelID.String(),
+		message.Name,
+		message.Message,
 	}
 
 	return out, nil

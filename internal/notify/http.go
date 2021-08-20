@@ -30,11 +30,11 @@ func HandleReceive(mux *http.ServeMux, notify Receiver, auth icchttp.Authenticat
 			return
 		}
 
-		vars := r.URL.Query()["meeting_id"]
+		meetingIDs := r.URL.Query()["meeting_id"]
 		meetingID := 0
-		if len(vars) != 0 {
+		if len(meetingIDs) != 0 {
 			var err error
-			meetingID, err = strconv.Atoi(vars[0])
+			meetingID, err = strconv.Atoi(meetingIDs[0])
 			if err != nil {
 				icchttp.Error(w, iccerror.NewMessageError(iccerror.ErrInvalid, "url query meeting_id has to be an int"))
 				return
@@ -45,6 +45,7 @@ func HandleReceive(mux *http.ServeMux, notify Receiver, auth icchttp.Authenticat
 
 		// Send channel id.
 		if _, err := fmt.Fprintf(w, `{"channel_id": "%s"}`+"\n", cid); err != nil {
+			icchttp.Error(w, fmt.Errorf("sending channel id: %w", err))
 			return
 		}
 
