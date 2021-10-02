@@ -51,7 +51,7 @@ func Run(ctx context.Context, environment []string, secret func(name string) (st
 	notify.HandleReceive(mux, notifyService, auth)
 	notify.HandlePublish(mux, notifyService, auth)
 
-	listenAddr := env["ICC_HOST"] + ":" + env["ICC_PORT"]
+	listenAddr := ":" + env["ICC_PORT"]
 	srv := &http.Server{Addr: listenAddr, Handler: mux}
 
 	// Shutdown logic in separate goroutine.
@@ -79,7 +79,6 @@ func Run(ctx context.Context, environment []string, secret func(name string) (st
 // defaut values.
 func defaultEnv(environment []string) map[string]string {
 	env := map[string]string{
-		"ICC_HOST": "",
 		"ICC_PORT": "9013",
 
 		"ICC_REDIS_HOST": "localhost",
