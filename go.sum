@@ -9,8 +9,8 @@ github.com/Microsoft/go-winio v0.5.0/go.mod h1:JPGBdM1cNvN/6ISo+n8V5iA4v8pBzdOpz
 github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 h1:TngWCqHvy9oXAN6lEVMRuU21PR1EtLVZJmdB18Gu3Rw=
 github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5/go.mod h1:lmUJ/7eu/Q8D7ML55dXQrVaamCz2vxCfdQBasLZfHKk=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
-github.com/OpenSlides/openslides-autoupdate-service v0.3.1-0.20210817190932-c002dcdfa52f h1:ZEX89I5p1cTB8LeaNXgn4XxA2JHwluP41bFi4bUcqQQ=
-github.com/OpenSlides/openslides-autoupdate-service v0.3.1-0.20210817190932-c002dcdfa52f/go.mod h1:dBIt2i6TdLTxI0YVaTIDdsoqYXiod9Lgdxxz18hersA=
+github.com/OpenSlides/openslides-autoupdate-service v0.3.1-0.20210924154240-3eadf04c6ec3 h1:eeXlQ1ooohHJXkh/kpLLGvNM/mgfsA9iks6OiZ/n2bA=
+github.com/OpenSlides/openslides-autoupdate-service v0.3.1-0.20210924154240-3eadf04c6ec3/go.mod h1:dBIt2i6TdLTxI0YVaTIDdsoqYXiod9Lgdxxz18hersA=
 github.com/OpenSlides/openslides-models-to-go v0.3.1-0.20210809095855-79ee196797eb/go.mod h1:4lP5K8B1aG/sBHptdYVAKPi4fXH276yhCCv6dBDKyzo=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=

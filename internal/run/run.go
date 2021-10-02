@@ -8,7 +8,9 @@ import (
 	"strings"
 
 	"github.com/OpenSlides/openslides-autoupdate-service/pkg/auth"
+	"github.com/OpenSlides/openslides-autoupdate-service/pkg/datastore"
 	messageBusRedis "github.com/OpenSlides/openslides-autoupdate-service/pkg/redis"
+	"github.com/OpenSlides/openslides-icc-service/internal/applause"
 	"github.com/OpenSlides/openslides-icc-service/internal/icchttp"
 	"github.com/OpenSlides/openslides-icc-service/internal/icclog"
 	"github.com/OpenSlides/openslides-icc-service/internal/notify"
@@ -32,6 +34,7 @@ func Run(ctx context.Context, environment []string, secret func(name string) (st
 	}
 
 	auth, err := buildAuth(
+		ctx,
 		env,
 		secret,
 		messageBus,
@@ -42,14 +45,24 @@ func Run(ctx context.Context, environment []string, secret func(name string) (st
 		return fmt.Errorf("building auth: %w", err)
 	}
 
+	ds, err := buildDatastore(env)
+	if err != nil {
+		return fmt.Errorf("build datastore service: %w", err)
+	}
+
 	backend := redis.New(env["ICC_REDIS_HOST"] + ":" + env["ICC_REDIS_PORT"])
 
 	notifyService := notify.New(ctx, backend)
+	applauseService := applause.New(backend, ds, ctx.Done())
+	go applauseService.Loop(ctx, errHandler)
+	go applauseService.PruneOldData(ctx)
 
 	mux := http.NewServeMux()
 	icchttp.HandleHealth(mux)
 	notify.HandleReceive(mux, notifyService, auth)
 	notify.HandlePublish(mux, notifyService, auth)
+	applause.HandleReceive(mux, applauseService, auth)
+	applause.HandleSend(mux, applauseService, auth)
 
 	listenAddr := env["ICC_HOST"] + ":" + env["ICC_PORT"]
 	srv := &http.Server{Addr: listenAddr, Handler: mux}
@@ -147,6 +160,7 @@ func buildErrHandler() func(err error) {
 
 // buildAuth returns the auth service needed by the http server.
 func buildAuth(
+	ctx context.Context,
 	env map[string]string,
 	getSecret func(name string) (string, error),
 	receiver auth.LogoutEventer,
@@ -178,7 +192,14 @@ func buildAuth(
 
 		icclog.Info("Auth Service: %s", url)
 
-		return auth.New(url, receiver, closed, errHandler, []byte(tokenKey), []byte(cookieKey))
+		a, err := auth.New(url, closed, []byte(tokenKey), []byte(cookieKey))
+		if err != nil {
+			return nil, fmt.Errorf("creating auth service: %w", err)
+		}
+
+		go a.ListenOnLogouts(ctx, receiver, errHandler)
+		go a.PruneOldData(ctx)
+		return a, nil
 
 	case "fake":
 		icclog.Info("Auth Method: FakeAuth (User ID 1 for all requests)")
@@ -231,4 +252,15 @@ func buildMessageBus(env map[string]string) (messageBus, error) {
 	}
 
 	return &messageBusRedis.Redis{Conn: conn}, nil
+}
+
+// buildDatastore configures the datastore service.
+func buildDatastore(
+	env map[string]string,
+) (*datastore.Datastore, error) {
+	protocol := env["DATASTORE_READER_PROTOCOL"]
+	host := env["DATASTORE_READER_HOST"]
+	port := env["DATASTORE_READER_PORT"]
+	url := protocol + "://" + host + ":" + port
+	return datastore.New(url), nil
 }

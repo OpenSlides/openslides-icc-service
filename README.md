@@ -116,7 +116,32 @@ Only one of the to_* fields is required. All other fields are required.
 
 ### Applause
 
-TODO
+The applause service needs a running datastore-reader. For testing, you can use
+the [fake
+datastore](https://github.com/OpenSlides/openslides-autoupdate-service/tree/main/cmd/datastore)
+from the autoupdate-service repo.
+
+To listen to messages, you can use this command:
+
+```
+curl -N localhot:9013/system/icc/notify?meeting_id=5
+```
+
+The meeting_id argument is required.
+
+The returned messages have the format:
+
+```
+{"level":5,"present_users":25}
+```
+
+To send applause, use:
+
+```
+curl localhost:9013/system/icc/applause/send?meeting_id=1
+```
+
+The argument meeting_id is required.
 
 ### Chat 
 

@@ -115,28 +115,38 @@ func (r *Redis) NotifyReceive(ctx context.Context) ([]byte, error) {
 
 // ApplausePublish saves an applause for the user at a given time as unix time
 // stamp.
-func (r *Redis) ApplausePublish(userID int, time int64) error {
+func (r *Redis) ApplausePublish(meetingID, userID int, time int64) error {
 	conn := r.pool.Get()
 	defer conn.Close()
 
-	if _, err := conn.Do("ZADD", applauseKey, time, userID); err != nil {
+	meetingUser := fmt.Sprintf("%d-%d", meetingID, userID)
+	if _, err := conn.Do("ZADD", applauseKey, time, meetingUser); err != nil {
 		return fmt.Errorf("adding applause in redis: %w", err)
 	}
 
 	return nil
 }
 
-// ApplauseReceive returned all applause since a given time as unix time stamp.
-func (r *Redis) ApplauseReceive(since int64) (int, error) {
+// ApplauseSince returned all applause since a given time as unix time stamp.
+func (r *Redis) ApplauseSince(time int64) (map[int]int, error) {
 	conn := r.pool.Get()
 	defer conn.Close()
 
-	n, err := redis.Int(conn.Do("ZCOUNT", applauseKey, since, "+inf"))
+	meetingUsers, err := redis.Strings(conn.Do("ZRANGE", applauseKey, time, "+inf", "BYSCORE"))
 	if err != nil {
-		return 0, fmt.Errorf("getting applause from redis: %w", err)
+		return nil, fmt.Errorf("getting applause from redis: %w", err)
 	}
 
-	return n, nil
+	out := make(map[int]int)
+	for _, meetingUser := range meetingUsers {
+		var meetingID int
+		if _, err := fmt.Sscanf(meetingUser, "%d-", &meetingID); err != nil {
+			return nil, fmt.Errorf("invalid value in redis %s: %w", meetingUser, err)
+		}
+		out[meetingID]++
+	}
+
+	return out, nil
 }
 
 // ApplauseCleanOld removes applause that is older then a given time.

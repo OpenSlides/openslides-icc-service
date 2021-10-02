@@ -119,19 +119,19 @@ func TestICC(t *testing.T) {
 	})
 
 	t.Run("Receive empty applause", func(t *testing.T) {
-		applause, err := r.ApplauseReceive(1000)
+		applause, err := r.ApplauseSince(1000)
 
 		if err != nil {
 			t.Fatalf("receiveApplause returned unexpected error: %v", err)
 		}
 
-		if applause != 0 {
+		if len(applause) != 0 {
 			t.Errorf("receiveApplause returned %d, expected 0", applause)
 		}
 	})
 
 	t.Run("Delete applause", func(t *testing.T) {
-		if err := r.ApplausePublish(1, 10); err != nil {
+		if err := r.ApplausePublish(1, 1, 10); err != nil {
 			t.Fatalf("sending applause: %v", err)
 		}
 
@@ -139,13 +139,13 @@ func TestICC(t *testing.T) {
 			t.Fatalf("deleting old applause: %v", err)
 		}
 
-		applause, err := r.ApplauseReceive(10)
+		applause, err := r.ApplauseSince(10)
 
 		if err != nil {
 			t.Fatalf("receiveApplause returned unexpected error: %v", err)
 		}
 
-		if applause != 0 {
+		if len(applause) != 0 {
 			t.Errorf("receiveApplause returned %d, expected 0", applause)
 		}
 	})
@@ -153,7 +153,7 @@ func TestICC(t *testing.T) {
 	t.Run("Delete not new applause", func(t *testing.T) {
 		defer r.ApplauseCleanOld(1000)
 
-		if err := r.ApplausePublish(1, 10); err != nil {
+		if err := r.ApplausePublish(1, 1, 10); err != nil {
 			t.Fatalf("sending applause: %v", err)
 		}
 
@@ -161,13 +161,13 @@ func TestICC(t *testing.T) {
 			t.Fatalf("deleting old applause: %v", err)
 		}
 
-		applause, err := r.ApplauseReceive(10)
+		applause, err := r.ApplauseSince(10)
 
 		if err != nil {
 			t.Fatalf("receiveApplause returned unexpected error: %v", err)
 		}
 
-		if applause != 1 {
+		if len(applause) != 1 {
 			t.Errorf("receiveApplause returned %d, expected 1", applause)
 		}
 	})
@@ -175,17 +175,17 @@ func TestICC(t *testing.T) {
 	t.Run("Receive applause for one user", func(t *testing.T) {
 		defer r.ApplauseCleanOld(1000)
 
-		if err := r.ApplausePublish(1, 10); err != nil {
+		if err := r.ApplausePublish(1, 1, 10); err != nil {
 			t.Fatalf("sending applause: %v", err)
 		}
 
-		applause, err := r.ApplauseReceive(10)
+		applause, err := r.ApplauseSince(10)
 
 		if err != nil {
 			t.Fatalf("receiveApplause returned unexpected error: %v", err)
 		}
 
-		if applause != 1 {
+		if applause[1] != 1 {
 			t.Errorf("receiveApplause returned %d, expected 1", applause)
 		}
 	})
@@ -193,21 +193,21 @@ func TestICC(t *testing.T) {
 	t.Run("Receive applause for one user twice", func(t *testing.T) {
 		defer r.ApplauseCleanOld(1000)
 
-		if err := r.ApplausePublish(1, 10); err != nil {
+		if err := r.ApplausePublish(1, 1, 10); err != nil {
 			t.Fatalf("sending applause: %v", err)
 		}
 
-		if err := r.ApplausePublish(1, 11); err != nil {
+		if err := r.ApplausePublish(1, 1, 11); err != nil {
 			t.Fatalf("sending applause: %v", err)
 		}
 
-		applause, err := r.ApplauseReceive(10)
+		applause, err := r.ApplauseSince(10)
 
 		if err != nil {
 			t.Fatalf("receiveApplause returned unexpected error: %v", err)
 		}
 
-		if applause != 1 {
+		if applause[1] != 1 {
 			t.Errorf("receiveApplause returned %d, expected 1", applause)
 		}
 	})
@@ -215,17 +215,17 @@ func TestICC(t *testing.T) {
 	t.Run("Receive applause for one user to old", func(t *testing.T) {
 		defer r.ApplauseCleanOld(1000)
 
-		if err := r.ApplausePublish(1, 9); err != nil {
+		if err := r.ApplausePublish(1, 1, 9); err != nil {
 			t.Fatalf("sending applause: %v", err)
 		}
 
-		applause, err := r.ApplauseReceive(10)
+		applause, err := r.ApplauseSince(10)
 
 		if err != nil {
 			t.Fatalf("receiveApplause returned unexpected error: %v", err)
 		}
 
-		if applause != 0 {
+		if applause[1] != 0 {
 			t.Errorf("receiveApplause returned %d, expected 0", applause)
 		}
 	})
@@ -233,21 +233,47 @@ func TestICC(t *testing.T) {
 	t.Run("Receive applause for two users", func(t *testing.T) {
 		defer r.ApplauseCleanOld(1000)
 
-		if err := r.ApplausePublish(1, 10); err != nil {
+		if err := r.ApplausePublish(1, 1, 10); err != nil {
 			t.Fatalf("sending applause: %v", err)
 		}
 
-		if err := r.ApplausePublish(2, 10); err != nil {
+		if err := r.ApplausePublish(1, 2, 10); err != nil {
 			t.Fatalf("sending applause: %v", err)
 		}
 
-		applause, err := r.ApplauseReceive(10)
+		applause, err := r.ApplauseSince(10)
 
 		if err != nil {
 			t.Fatalf("receiveApplause returned unexpected error: %v", err)
 		}
 
-		if applause != 2 {
+		if applause[1] != 2 {
+			t.Errorf("receiveApplause returned %d, expected 2", applause)
+		}
+	})
+
+	t.Run("Receive applause for one user in two meetings", func(t *testing.T) {
+		defer r.ApplauseCleanOld(1000)
+
+		if err := r.ApplausePublish(1, 1, 10); err != nil {
+			t.Fatalf("sending applause: %v", err)
+		}
+
+		if err := r.ApplausePublish(2, 2, 10); err != nil {
+			t.Fatalf("sending applause: %v", err)
+		}
+
+		applause, err := r.ApplauseSince(10)
+
+		if err != nil {
+			t.Fatalf("receiveApplause returned unexpected error: %v", err)
+		}
+
+		if applause[1] != 1 {
+			t.Errorf("receiveApplause returned %d, expected 2", applause)
+		}
+
+		if applause[2] != 1 {
 			t.Errorf("receiveApplause returned %d, expected 2", applause)
 		}
 	})
