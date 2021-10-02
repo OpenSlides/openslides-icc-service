@@ -60,6 +60,7 @@ func HandleReceive(mux *http.ServeMux, applause Receive, auth icchttp.Authentica
 			w.Header().Set("Content-Type", "application/json")
 
 			// TODO: Can anonymous receive applause?
+			// TODO: Check if applause is enabled (also when sending)
 
 			meetingStr := r.URL.Query().Get("meeting_id")
 			meetingID, err := strconv.Atoi(meetingStr)
