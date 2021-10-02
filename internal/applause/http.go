@@ -50,7 +50,6 @@ func HandleSend(mux *http.ServeMux, applause Sender, auth icchttp.Authenticater)
 // Receive gets applause messages.
 type Receive interface {
 	Receive(ctx context.Context, tid uint64, meetingID int) (newTID uint64, msg MSG, err error)
-	LastID() uint64
 }
 
 // HandleReceive registers the icc/applause route.
@@ -69,14 +68,8 @@ func HandleReceive(mux *http.ServeMux, applause Receive, auth icchttp.Authentica
 				return
 			}
 
-			var tid uint64
 			encoder := json.NewEncoder(w)
-			if err := encoder.Encode(MSG{}); err != nil {
-				icchttp.Error(w, fmt.Errorf("writing firstmessage: %w", err))
-				return
-			}
-			w.(http.Flusher).Flush()
-
+			var tid uint64
 			for {
 				var message MSG
 				tid, message, err = applause.Receive(r.Context(), tid, meetingID)

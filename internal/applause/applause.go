@@ -48,6 +48,9 @@ func New(b Backend, db datastore.Getter, closed <-chan struct{}) *Applause {
 		datastore: db,
 	}
 
+	// Make sure the topic is not empty.
+	notify.topic.Publish("")
+
 	return &notify
 }
 
@@ -67,7 +70,14 @@ func (a *Applause) Send(meetingID, userID int) error {
 
 // Receive returns the applause for a given meeting.
 func (a *Applause) Receive(ctx context.Context, tid uint64, meetingID int) (newTID uint64, msg MSG, err error) {
-	// TODO: Test that this does not return, if there is a message in another meeting
+	if tid == 0 {
+		present, err := a.presentUser(ctx, meetingID)
+		if err != nil {
+			return 0, MSG{}, fmt.Errorf("fetching present user: %w", err)
+		}
+		return a.topic.LastID(), MSG{0, present}, nil
+	}
+
 	for {
 		var messages []string
 		tid, messages, err = a.topic.Receive(ctx, tid)
@@ -170,6 +180,7 @@ func (a *Applause) PruneOldData(ctx context.Context) {
 	}
 }
 
+// presentUser returns the number of users in this meeting.
 func (a *Applause) presentUser(ctx context.Context, meetingID int) (int, error) {
 	fetch := datastore.NewFetcher(a.datastore)
 	ids := fetch.Field().Meeting_PresentUserIDs(ctx, meetingID)
