@@ -13,7 +13,7 @@ import (
 )
 
 func TestHandleSend(t *testing.T) {
-	url := "/system/icc/applause/send"
+	url := "/system/icc/applause/send?meeting_id=1"
 
 	t.Run("Anonymous", func(t *testing.T) {
 		auther := icctest.AutherStub{}
