@@ -207,16 +207,13 @@ func (a *Applause) Loop(ctx context.Context, errHandler func(error)) {
 			}
 			lastApplause[meetingID] = level
 
-			presentUser, err := a.presentUser(ctx, meetingID)
+			msg, err := a.toMSG(ctx, meetingID, level)
 			if err != nil {
-				errHandler(fmt.Errorf("getting present Users: %w", err))
+				errHandler(fmt.Errorf("converting level to MSG: %w", err))
 				continue
 			}
 
-			message[meetingID] = MSG{
-				level,
-				presentUser,
-			}
+			message[meetingID] = msg
 		}
 
 		if len(message) == 0 {
@@ -230,6 +227,19 @@ func (a *Applause) Loop(ctx context.Context, errHandler func(error)) {
 		}
 		a.topic.Publish(string(b))
 	}
+}
+
+// toMSG converts a int (applause level) to a MSG object.
+func (a *Applause) toMSG(ctx context.Context, meetingID, level int) (MSG, error) {
+	presentUser, err := a.presentUser(ctx, meetingID)
+	if err != nil {
+		return MSG{}, fmt.Errorf("getting present Users: %w", err)
+	}
+
+	return MSG{
+		level,
+		presentUser,
+	}, nil
 }
 
 // PruneOldData removes applause data.
