@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/OpenSlides/openslides-autoupdate-service/pkg/datastore"
+	"github.com/OpenSlides/openslides-icc-service/internal/iccerror"
 	"github.com/ostcar/topic"
 )
 
@@ -61,9 +62,75 @@ type MSG struct {
 }
 
 // Send registers, that a user applaused in a meeting.
-func (a *Applause) Send(meetingID, userID int) error {
+func (a *Applause) Send(ctx context.Context, meetingID, userID int) error {
+	if userID == 0 {
+		return iccerror.NewMessageError(iccerror.ErrNotAllowed, "Anonymous is not allowed to applause. Please be quiet.")
+	}
+
+	fetcher := datastore.NewFetcher(a.datastore)
+
+	applauseEnabled := fetcher.Field().Meeting_ApplauseEnable(ctx, meetingID)
+	if err := fetcher.Err(); err != nil {
+		return fmt.Errorf("fetching applause enabled: %w", err)
+	}
+
+	if !applauseEnabled {
+		return iccerror.NewMessageError(iccerror.ErrNotAllowed, "applause is not enabled in meeting %d. Please be quiet.", meetingID)
+	}
+
+	meetingUserIDs := fetcher.Field().Meeting_UserIDs(ctx, meetingID)
+	if err := fetcher.Err(); err != nil {
+		return fmt.Errorf("fetching meeting users: %w", err)
+	}
+
+	var inMeeting bool
+	for _, u := range meetingUserIDs {
+		if u == userID {
+			inMeeting = true
+			break
+		}
+	}
+
+	if !inMeeting {
+		return iccerror.NewMessageError(iccerror.ErrNotAllowed, "You are not part of meeting %d. Please be quiet.", meetingID)
+	}
+
 	if err := a.backend.ApplausePublish(meetingID, userID, time.Now().Unix()); err != nil {
 		return fmt.Errorf("publish applause in backend: %w", err)
+	}
+	return nil
+}
+
+// CanReceive returns an error, if the user can not receive applause.
+func (a *Applause) CanReceive(ctx context.Context, meetingID, userID int) error {
+	fetcher := datastore.NewFetcher(a.datastore)
+	if userID == 0 {
+		anonymousEnabled := fetcher.Field().Meeting_EnableAnonymous(ctx, meetingID)
+		if err := fetcher.Err(); err != nil {
+			return fmt.Errorf("fetching anonymous enabled: %w", err)
+
+		}
+		if !anonymousEnabled {
+			return iccerror.NewMessageError(iccerror.ErrNotAllowed, "Anonymous is not enabled")
+		}
+		return nil
+	}
+
+	meetingUserIDs := fetcher.Field().Meeting_UserIDs(ctx, meetingID)
+	if err := fetcher.Err(); err != nil {
+		return fmt.Errorf("fetching meeting users: %w", err)
+	}
+
+	var inMeeting bool
+	for _, u := range meetingUserIDs {
+		if u == userID {
+			inMeeting = true
+			break
+		}
+	}
+
+	if !inMeeting {
+		return iccerror.NewMessageError(iccerror.ErrNotAllowed, "You are not part of meeting %d.", meetingID)
 	}
 	return nil
 }

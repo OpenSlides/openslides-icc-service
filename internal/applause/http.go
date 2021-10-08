@@ -13,7 +13,7 @@ import (
 
 // Sender saves the applause.
 type Sender interface {
-	Send(meetingID, uid int) error
+	Send(ctx context.Context, meetingID, uid int) error
 }
 
 // HandleSend registers the icc/applause route.
@@ -30,8 +30,6 @@ func HandleSend(mux *http.ServeMux, applause Sender, auth icchttp.Authenticater)
 				return
 			}
 
-			// TODO: What permission is needed to send applause?
-
 			meetingStr := r.URL.Query().Get("meeting_id")
 			meetingID, err := strconv.Atoi(meetingStr)
 			if err != nil {
@@ -39,7 +37,7 @@ func HandleSend(mux *http.ServeMux, applause Sender, auth icchttp.Authenticater)
 				return
 			}
 
-			if err := applause.Send(meetingID, uid); err != nil {
+			if err := applause.Send(r.Context(), meetingID, uid); err != nil {
 				icchttp.Error(w, fmt.Errorf("saving applause: %w", err))
 				return
 			}
@@ -50,6 +48,7 @@ func HandleSend(mux *http.ServeMux, applause Sender, auth icchttp.Authenticater)
 // Receive gets applause messages.
 type Receive interface {
 	Receive(ctx context.Context, tid uint64, meetingID int) (newTID uint64, msg MSG, err error)
+	CanReceive(ctx context.Context, meetingID, userID int) error
 }
 
 // HandleReceive registers the icc/applause route.
@@ -59,13 +58,15 @@ func HandleReceive(mux *http.ServeMux, applause Receive, auth icchttp.Authentica
 		func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 
-			// TODO: Can anonymous receive applause?
-			// TODO: Check if applause is enabled (also when sending)
-
 			meetingStr := r.URL.Query().Get("meeting_id")
 			meetingID, err := strconv.Atoi(meetingStr)
 			if err != nil {
 				icchttp.Error(w, iccerror.NewMessageError(iccerror.ErrInvalid, "Query meeting has to be an int."))
+				return
+			}
+
+			if err := applause.CanReceive(r.Context(), meetingID, auth.FromContext(r.Context())); err != nil {
+				icchttp.Error(w, err)
 				return
 			}
 
