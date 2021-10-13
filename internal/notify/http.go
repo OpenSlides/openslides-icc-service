@@ -22,6 +22,7 @@ func HandleReceive(mux *http.ServeMux, notify Receiver, auth icchttp.Authenticat
 	url := icchttp.Path + "/notify"
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/octet-stream")
+		w.Header().Set("Cache-Control", "no-store, max-age=0")
 
 		uid := auth.FromContext(r.Context())
 		if uid == 0 {

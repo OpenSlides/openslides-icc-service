@@ -49,6 +49,7 @@ func HandleReceive(mux *http.ServeMux, applause Receive, auth icchttp.Authentica
 		icchttp.Path+"/applause",
 		func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set("Cache-Control", "no-store, max-age=0")
 
 			// TODO: Can anonymous receive applause?
 			// TODO: Get meetingID from query
