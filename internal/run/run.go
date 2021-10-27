@@ -189,15 +189,9 @@ func buildAuth(
 
 		icclog.Info("Auth Service: %s", url)
 
-<<<<<<< HEAD
-		a, err := auth.New(url, closed, []byte(tokenKey), []byte(cookieKey))
-		if err != nil {
-			return nil, fmt.Errorf("creating auth service: %w", err)
-=======
 		a, err := auth.New(url, ctx.Done(), []byte(tokenKey), []byte(cookieKey))
 		if err != nil {
 			return nil, fmt.Errorf("creating auth connection: %w", err)
->>>>>>> a9df313 (update auth lib and other deps)
 		}
 
 		go a.ListenOnLogouts(ctx, receiver, errHandler)
