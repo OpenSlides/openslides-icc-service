@@ -38,7 +38,6 @@ func Run(ctx context.Context, environment []string, secret func(name string) (st
 		env,
 		secret,
 		messageBus,
-		ctx.Done(),
 		errHandler,
 	)
 	if err != nil {
@@ -163,7 +162,6 @@ func buildAuth(
 	env map[string]string,
 	getSecret func(name string) (string, error),
 	receiver auth.LogoutEventer,
-	closed <-chan struct{},
 	errHandler func(error),
 ) (icchttp.Authenticater, error) {
 	method := env["AUTH"]
@@ -191,9 +189,15 @@ func buildAuth(
 
 		icclog.Info("Auth Service: %s", url)
 
+<<<<<<< HEAD
 		a, err := auth.New(url, closed, []byte(tokenKey), []byte(cookieKey))
 		if err != nil {
 			return nil, fmt.Errorf("creating auth service: %w", err)
+=======
+		a, err := auth.New(url, ctx.Done(), []byte(tokenKey), []byte(cookieKey))
+		if err != nil {
+			return nil, fmt.Errorf("creating auth connection: %w", err)
+>>>>>>> a9df313 (update auth lib and other deps)
 		}
 
 		go a.ListenOnLogouts(ctx, receiver, errHandler)
