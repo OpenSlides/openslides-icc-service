@@ -59,10 +59,11 @@ func Error(w http.ResponseWriter, err error) {
 		error
 		Type() string
 	}
-	status := 400
-	if !errors.As(err, &errTyped) {
-		// Unknown error. Handle as 500er.
-		status = 500
+	status := 500
+	if errors.As(err, &errTyped) {
+		if errTyped.Type() != iccerror.ErrInternal.Error() {
+			status = 400
+		}
 	}
 
 	w.WriteHeader(status)
