@@ -67,10 +67,10 @@ func (a *Applause) Send(ctx context.Context, meetingID, userID int) error {
 		return iccerror.NewMessageError(iccerror.ErrNotAllowed, "Anonymous is not allowed to applause. Please be quiet.")
 	}
 
-	fetcher := datastore.NewFetcher(a.datastore)
+	fetcher := datastore.NewRequest(a.datastore)
 
-	applauseEnabled := fetcher.Field().Meeting_ApplauseEnable(ctx, meetingID)
-	if err := fetcher.Err(); err != nil {
+	applauseEnabled, err := fetcher.Meeting_ApplauseEnable(meetingID).Value(ctx)
+	if err != nil {
 		return fmt.Errorf("fetching applause enabled: %w", err)
 	}
 
@@ -78,8 +78,8 @@ func (a *Applause) Send(ctx context.Context, meetingID, userID int) error {
 		return iccerror.NewMessageError(iccerror.ErrNotAllowed, "applause is not enabled in meeting %d. Please be quiet.", meetingID)
 	}
 
-	meetingUserIDs := fetcher.Field().Meeting_UserIDs(ctx, meetingID)
-	if err := fetcher.Err(); err != nil {
+	meetingUserIDs, err := fetcher.Meeting_UserIDs(meetingID).Value(ctx)
+	if err != nil {
 		return fmt.Errorf("fetching meeting users: %w", err)
 	}
 
@@ -103,10 +103,10 @@ func (a *Applause) Send(ctx context.Context, meetingID, userID int) error {
 
 // CanReceive returns an error, if the user can not receive applause.
 func (a *Applause) CanReceive(ctx context.Context, meetingID, userID int) error {
-	fetcher := datastore.NewFetcher(a.datastore)
+	fetcher := datastore.NewRequest(a.datastore)
 	if userID == 0 {
-		anonymousEnabled := fetcher.Field().Meeting_EnableAnonymous(ctx, meetingID)
-		if err := fetcher.Err(); err != nil {
+		anonymousEnabled, err := fetcher.Meeting_EnableAnonymous(meetingID).Value(ctx)
+		if err != nil {
 			return fmt.Errorf("fetching anonymous enabled: %w", err)
 
 		}
@@ -116,8 +116,8 @@ func (a *Applause) CanReceive(ctx context.Context, meetingID, userID int) error 
 		return nil
 	}
 
-	meetingUserIDs := fetcher.Field().Meeting_UserIDs(ctx, meetingID)
-	if err := fetcher.Err(); err != nil {
+	meetingUserIDs, err := fetcher.Meeting_UserIDs(meetingID).Value(ctx)
+	if err != nil {
 		return fmt.Errorf("fetching meeting users: %w", err)
 	}
 
@@ -259,9 +259,9 @@ func (a *Applause) PruneOldData(ctx context.Context) {
 
 // presentUser returns the number of users in this meeting.
 func (a *Applause) presentUser(ctx context.Context, meetingID int) (int, error) {
-	fetch := datastore.NewFetcher(a.datastore)
-	ids := fetch.Field().Meeting_PresentUserIDs(ctx, meetingID)
-	if err := fetch.Err(); err != nil {
+	fetch := datastore.NewRequest(a.datastore)
+	ids, err := fetch.Meeting_PresentUserIDs(meetingID).Value(ctx)
+	if err != nil {
 		var errDoesNotExist datastore.DoesNotExistError
 		if !errors.As(err, &errDoesNotExist) {
 			return 0, fmt.Errorf("get present users for meeting %d: %w", meetingID, err)
