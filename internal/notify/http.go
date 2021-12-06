@@ -49,6 +49,7 @@ func HandleReceive(mux *http.ServeMux, notify Receiver, auth icchttp.Authenticat
 			icchttp.Error(w, fmt.Errorf("sending channel id: %w", err))
 			return
 		}
+		w.(http.Flusher).Flush()
 
 		encoder := json.NewEncoder(w)
 
@@ -63,6 +64,8 @@ func HandleReceive(mux *http.ServeMux, notify Receiver, auth icchttp.Authenticat
 				icchttp.ErrorNoStatus(w, fmt.Errorf("sending message: %w", err))
 				return
 			}
+
+			w.(http.Flusher).Flush()
 		}
 	})
 
