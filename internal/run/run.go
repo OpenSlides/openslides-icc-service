@@ -91,7 +91,7 @@ func Run(ctx context.Context, environment []string, secret func(name string) (st
 // defaut values.
 func defaultEnv(environment []string) map[string]string {
 	env := map[string]string{
-		"ICC_PORT": "9013",
+		"ICC_PORT": "9007",
 
 		"ICC_REDIS_HOST": "localhost",
 		"ICC_REDIS_PORT": "6379",

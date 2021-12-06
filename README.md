@@ -74,7 +74,7 @@ printed immediately.
 To listen to messages, you can use this command:
 
 ```
-curl -N localhot:9013/system/icc/notify?meeting_id=5
+curl -N localhot:9007/system/icc/notify?meeting_id=5
 ```
 
 The meeting_id query argument is optional.
@@ -97,7 +97,7 @@ Each other other line is one notify message. It has the following format:
 To publish a message, you can use the following request:
 
 ```
-curl localhost:9013/system/icc/notify/publish -d '{
+curl localhost:9007/system/icc/notify/publish -d '{
   "channel_id": "STRING_SEE_ABOVE",
   "to_meeting": 5,
   "to_users": [3,4],
@@ -124,7 +124,7 @@ from the autoupdate-service repo.
 To listen to messages, you can use this command:
 
 ```
-curl -N localhot:9013/system/icc/notify?meeting_id=5
+curl -N localhot:9007/system/icc/notify?meeting_id=5
 ```
 
 The meeting_id argument is required.
@@ -138,7 +138,7 @@ The returned messages have the format:
 To send applause, use:
 
 ```
-curl localhost:9013/system/icc/applause/send?meeting_id=1
+curl localhost:9007/system/icc/applause/send?meeting_id=1
 ```
 
 The argument meeting_id is required.
@@ -154,8 +154,8 @@ TODO
 
 The Service uses the following environment variables:
 
-* `ICC_PORT`: Lets the service listen on port 9013. The default is
-  `9013`.
+* `ICC_PORT`: Lets the service listen on port 9007. The default is
+  `9007`.
 * `ICC_HOST`: The device where the service starts. The default is am
   empty string which starts the service on any device.
 * `ICC_REDIS_HOST`: The host of the redis instance to save icc messages. The
