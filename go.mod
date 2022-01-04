@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/OpenSlides/openslides-autoupdate-service v0.3.1-0.20211119191508-69d94f1595f1
-	github.com/gomodule/redigo v1.8.6
+	github.com/gomodule/redigo v1.8.8
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/ory/dockertest/v3 v3.8.1
 	github.com/ostcar/topic v0.3.4
