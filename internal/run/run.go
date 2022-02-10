@@ -44,7 +44,7 @@ func Run(ctx context.Context, environment []string, secret func(name string) (st
 		return fmt.Errorf("building auth: %w", err)
 	}
 
-	ds, err := buildDatastore(env)
+	ds, err := buildDatastore(env, messageBus)
 	if err != nil {
 		return fmt.Errorf("build datastore service: %w", err)
 	}
@@ -223,6 +223,7 @@ func (a authStub) FromContext(ctx context.Context) int {
 
 type messageBus interface {
 	auth.LogoutEventer
+	datastore.Updater
 }
 
 func buildMessageBus(env map[string]string) (messageBus, error) {
@@ -252,12 +253,11 @@ func buildMessageBus(env map[string]string) (messageBus, error) {
 }
 
 // buildDatastore configures the datastore service.
-func buildDatastore(
-	env map[string]string,
-) (*datastore.Datastore, error) {
+func buildDatastore(env map[string]string, updater datastore.Updater) (*datastore.Datastore, error) {
 	protocol := env["DATASTORE_READER_PROTOCOL"]
 	host := env["DATASTORE_READER_HOST"]
 	port := env["DATASTORE_READER_PORT"]
 	url := protocol + "://" + host + ":" + port
-	return datastore.New(url), nil
+	source := datastore.NewSourceDatastore(url, updater)
+	return datastore.New(source, nil), nil
 }
