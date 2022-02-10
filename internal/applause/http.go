@@ -18,30 +18,33 @@ type Sender interface {
 
 // HandleSend registers the icc/applause route.
 func HandleSend(mux *http.ServeMux, applause Sender, auth icchttp.Authenticater) {
-	mux.HandleFunc(
-		icchttp.Path+"/applause/send",
-		func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "application/json")
+	url := icchttp.Path + "/applause/send"
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 
-			uid := auth.FromContext(r.Context())
-			if uid == 0 {
-				w.WriteHeader(401)
-				icchttp.ErrorNoStatus(w, iccerror.NewMessageError(iccerror.ErrNotAllowed, "Anonymous user can not send applause."))
-				return
-			}
+		uid := auth.FromContext(r.Context())
+		if uid == 0 {
+			w.WriteHeader(401)
+			icchttp.ErrorNoStatus(w, iccerror.NewMessageError(iccerror.ErrNotAllowed, "Anonymous user can not send applause."))
+			return
+		}
 
-			meetingStr := r.URL.Query().Get("meeting_id")
-			meetingID, err := strconv.Atoi(meetingStr)
-			if err != nil {
-				icchttp.Error(w, iccerror.NewMessageError(iccerror.ErrInvalid, "Query meeting has to be an int."))
-				return
-			}
+		meetingStr := r.URL.Query().Get("meeting_id")
+		meetingID, err := strconv.Atoi(meetingStr)
+		if err != nil {
+			icchttp.Error(w, iccerror.NewMessageError(iccerror.ErrInvalid, "Query meeting has to be an int."))
+			return
+		}
 
-			if err := applause.Send(r.Context(), meetingID, uid); err != nil {
-				icchttp.Error(w, fmt.Errorf("saving applause: %w", err))
-				return
-			}
-		},
+		if err := applause.Send(r.Context(), meetingID, uid); err != nil {
+			icchttp.Error(w, fmt.Errorf("saving applause: %w", err))
+			return
+		}
+	})
+
+	mux.Handle(
+		url,
+		icchttp.AuthMiddleware(handler, auth),
 	)
 }
 
@@ -53,8 +56,8 @@ type Receive interface {
 
 // HandleReceive registers the icc/applause route.
 func HandleReceive(mux *http.ServeMux, applause Receive, auth icchttp.Authenticater) {
-	mux.HandleFunc(
-		icchttp.Path+"/applause",
+	url := icchttp.Path + "/applause"
+	handler := http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			w.Header().Set("Cache-Control", "no-store, max-age=0")
@@ -87,6 +90,10 @@ func HandleReceive(mux *http.ServeMux, applause Receive, auth icchttp.Authentica
 				}
 				w.(http.Flusher).Flush()
 			}
-		},
+		})
+
+	mux.Handle(
+		url,
+		icchttp.AuthMiddleware(handler, auth),
 	)
 }

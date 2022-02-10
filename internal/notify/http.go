@@ -82,25 +82,25 @@ type Publisher interface {
 
 // HandlePublish registers the notify/publish route.
 func HandlePublish(mux *http.ServeMux, notify Publisher, auth icchttp.Authenticater) {
+	url := icchttp.Path + "/notify/publish"
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		uid := auth.FromContext(r.Context())
+		if uid == 0 {
+			w.WriteHeader(401)
+			icchttp.ErrorNoStatus(w, iccerror.NewMessageError(iccerror.ErrNotAllowed, "Anonymous user can not publish notify messages."))
+			return
+		}
+
+		if err := notify.Publish(r.Body, uid); err != nil {
+			icchttp.Error(w, fmt.Errorf("publish notify message: %w", err))
+			return
+		}
+	})
+
 	mux.Handle(
-		icchttp.Path+"/notify/publish",
-		icchttp.AuthMiddleware(
-			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.Header().Set("Content-Type", "application/json")
-
-				uid := auth.FromContext(r.Context())
-				if uid == 0 {
-					w.WriteHeader(401)
-					icchttp.ErrorNoStatus(w, iccerror.NewMessageError(iccerror.ErrNotAllowed, "Anonymous user can not publish notify messages."))
-					return
-				}
-
-				if err := notify.Publish(r.Body, uid); err != nil {
-					icchttp.Error(w, fmt.Errorf("publish notify message: %w", err))
-					return
-				}
-			}),
-			auth,
-		),
+		url,
+		icchttp.AuthMiddleware(handler, auth),
 	)
 }
