@@ -147,6 +147,10 @@ func secret(name string, getSecret func(name string) (string, error), dev bool) 
 
 func buildErrHandler() func(err error) {
 	return func(err error) {
+		if errors.Is(err, context.Canceled) {
+			return
+		}
+
 		var closing interface {
 			Closing()
 		}
