@@ -12,6 +12,7 @@ COPY internal internal
 # Build service in seperate stage.
 FROM base as builder
 RUN CGO_ENABLED=0 go build ./cmd/icc
+RUN CGO_ENABLED=0 go build ./cmd/healthcheck
 
 
 # Development build.
@@ -34,7 +35,9 @@ LABEL org.opencontainers.image.licenses="MIT"
 LABEL org.opencontainers.image.source="https://github.com/OpenSlides/openslides-icc-service"
 
 COPY --from=builder /root/icc .
+COPY --from=builder /root/healthcheck .
 EXPOSE 9007
 ENV MESSAGING redis
 ENV AUTH ticket
 ENTRYPOINT ["/icc"]
+HEALTHCHECK CMD ["/healthcheck"]

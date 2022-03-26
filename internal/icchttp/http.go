@@ -107,7 +107,7 @@ func HandleHealth(mux *http.ServeMux) {
 		"/system/icc/health",
 		func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/octet-stream")
-			fmt.Fprintln(w, `{"healthy": true}`)
+			fmt.Fprintln(w, `{"healthy":true}`)
 		},
 	)
 }
