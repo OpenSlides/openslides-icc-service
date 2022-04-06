@@ -7,7 +7,7 @@ require (
 	github.com/gomodule/redigo v1.8.8
 	github.com/google/go-cmp v0.5.7 // indirect
 	github.com/ory/dockertest/v3 v3.8.1
-	github.com/ostcar/topic v0.3.4
+	github.com/ostcar/topic v0.4.0
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

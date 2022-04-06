@@ -151,8 +151,8 @@ github.com/opencontainers/selinux v1.8.2/go.mod h1:MUIHuUEvKB1wtJjQdOyYRgOnLD2xA
 github.com/opencontainers/selinux v1.10.0/go.mod h1:2i0OySw99QjzBBQByd1Gr9gSjvuho1lHsJxIJ3gGbJI=
 github.com/ory/dockertest/v3 v3.8.1 h1:vU/8d1We4qIad2YM0kOwRVtnyue7ExvacPiw1yDm17g=
 github.com/ory/dockertest/v3 v3.8.1/go.mod h1:wSRQ3wmkz+uSARYMk7kVJFDBGm8x5gSxIhI7NDc+BAQ=
-github.com/ostcar/topic v0.3.4 h1:k/xAYTuvbynFIzhW6TLWXoke8c6XZpLkDTNbI3pCsEw=
-github.com/ostcar/topic v0.3.4/go.mod h1:khNJTnAgga31c8l+633RYMtGCtf0v5BRHILX6KIbD6s=
+github.com/ostcar/topic v0.4.0 h1:Ylu6gWGZO7zh9BtIkVHohvZzv0XLGHGHdnhZa4Cp9M4=
+github.com/ostcar/topic v0.4.0/go.mod h1:13aefloBRYAhhb4BWjwb0hMRNx+9QSbdyCJ631ioCW4=
 github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
