@@ -20,7 +20,7 @@ func main() {
 	defer cancel()
 
 	icclog.SetInfoLogger(log.Default())
-	if dev, _ := strconv.ParseBool(os.Getenv("OPENSLIDES_DEVELOPMENT")); dev || true {
+	if dev, _ := strconv.ParseBool(os.Getenv("OPENSLIDES_DEVELOPMENT")); dev {
 		icclog.SetDebugLogger(log.New(os.Stderr, "DEBUG ", log.LstdFlags))
 	}
 
