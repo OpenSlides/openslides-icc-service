@@ -12,6 +12,7 @@ import (
 
 	"github.com/OpenSlides/openslides-icc-service/internal/icclog"
 	"github.com/OpenSlides/openslides-icc-service/internal/run"
+	"golang.org/x/sys/unix"
 )
 
 func main() {
@@ -36,7 +37,7 @@ func interruptContext() (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
 		sigint := make(chan os.Signal, 1)
-		signal.Notify(sigint, os.Interrupt)
+		signal.Notify(sigint, os.Interrupt, unix.SIGTERM)
 		<-sigint
 		cancel()
 
