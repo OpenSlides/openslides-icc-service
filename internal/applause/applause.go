@@ -34,7 +34,7 @@ type Backend interface {
 // Applause holds the state of the service.
 type Applause struct {
 	backend   Backend
-	topic     *topic.Topic
+	topic     *topic.Topic[string]
 	datastore datastore.Getter
 }
 
@@ -45,7 +45,7 @@ type Applause struct {
 func New(b Backend, db datastore.Getter, closed <-chan struct{}) *Applause {
 	notify := Applause{
 		backend:   b,
-		topic:     topic.New(topic.WithClosed(closed)),
+		topic:     topic.New(topic.WithClosed[string](closed)),
 		datastore: db,
 	}
 

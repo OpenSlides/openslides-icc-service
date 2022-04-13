@@ -33,7 +33,7 @@ type Backend interface {
 type Notify struct {
 	backend Backend
 	cIDGen  cIDGen
-	topic   *topic.Topic
+	topic   *topic.Topic[string]
 }
 
 // New returns an initialized state of the notify service.
@@ -43,7 +43,7 @@ type Notify struct {
 func New(ctx context.Context, b Backend) *Notify {
 	notify := Notify{
 		backend: b,
-		topic:   topic.New(topic.WithClosed(ctx.Done())),
+		topic:   topic.New(topic.WithClosed[string](ctx.Done())),
 	}
 
 	go notify.listen(ctx)
@@ -169,7 +169,7 @@ type messageProvider struct {
 	meetingID int
 	channelID channelID
 
-	topic      *topic.Topic
+	topic      *topic.Topic[string]
 	messageBuf []string
 }
 
