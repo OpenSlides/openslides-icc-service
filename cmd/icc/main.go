@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"strconv"
 
 	"os"
 	"os/signal"
@@ -18,9 +19,10 @@ func main() {
 	defer cancel()
 
 	icclog.SetInfoLogger(log.Default())
-	if os.Getenv("OPENSLIDES_DEVELOPMENT") != "" {
+	if dev, _ := strconv.ParseBool(os.Getenv("OPENSLIDES_DEVELOPMENT")); dev || true {
 		icclog.SetDebugLogger(log.New(os.Stderr, "DEBUG ", log.LstdFlags))
 	}
+
 	if err := run.Run(ctx, os.Environ(), secret); err != nil {
 		icclog.Info("Error: %v", err)
 	}

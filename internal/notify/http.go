@@ -9,6 +9,7 @@ import (
 
 	"github.com/OpenSlides/openslides-icc-service/internal/iccerror"
 	"github.com/OpenSlides/openslides-icc-service/internal/icchttp"
+	"github.com/OpenSlides/openslides-icc-service/internal/icclog"
 )
 
 // Receiver is a type with the function Receive(). It is a blocking function
@@ -43,6 +44,8 @@ func HandleReceive(mux *http.ServeMux, notify Receiver, auth icchttp.Authenticat
 		}
 
 		cid, next := notify.Receive(meetingID, uid)
+
+		icclog.Debug("HTTP Recieve from user %d, channel id: %s", uid, cid)
 
 		// Send channel id.
 		if _, err := fmt.Fprintf(w, `{"channel_id": "%s"}`+"\n", cid); err != nil {
