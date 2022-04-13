@@ -263,5 +263,5 @@ func buildDatastore(env map[string]string, updater datastore.Updater) (*datastor
 	port := env["DATASTORE_READER_PORT"]
 	url := protocol + "://" + host + ":" + port
 	source := datastore.NewSourceDatastore(url, updater)
-	return datastore.New(source, nil), nil
+	return datastore.New(source, nil, nil), nil
 }

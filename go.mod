@@ -3,7 +3,7 @@ module github.com/OpenSlides/openslides-icc-service
 go 1.18
 
 require (
-	github.com/OpenSlides/openslides-autoupdate-service v0.4.1-0.20220210150646-5678dc385a7d
+	github.com/OpenSlides/openslides-autoupdate-service v0.4.1-0.20220413134533-ef848f16f059
 	github.com/gomodule/redigo v1.8.8
 	github.com/google/go-cmp v0.5.7 // indirect
 	github.com/ory/dockertest/v3 v3.8.1
