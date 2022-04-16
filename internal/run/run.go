@@ -26,7 +26,13 @@ import (
 func Run(ctx context.Context, environment []string, secret func(name string) (string, error)) error {
 	env := defaultEnv(environment)
 
-	errHandler := buildErrHandler()
+	errHandler := func(err error) {
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			return
+		}
+
+		icclog.Info("Error: %v", err)
+	}
 
 	messageBus, err := buildMessageBus(env)
 	if err != nil {
@@ -51,8 +57,10 @@ func Run(ctx context.Context, environment []string, secret func(name string) (st
 
 	backend := redis.New(env["ICC_REDIS_HOST"] + ":" + env["ICC_REDIS_PORT"])
 
-	notifyService := notify.New(ctx, backend)
-	applauseService := applause.New(backend, ds, ctx.Done())
+	notifyService := notify.New(backend)
+	go notifyService.Listen(ctx)
+
+	applauseService := applause.New(backend, ds)
 	go applauseService.Loop(ctx, errHandler)
 	go applauseService.PruneOldData(ctx)
 
@@ -100,7 +108,6 @@ func defaultEnv(environment []string) map[string]string {
 		"DATASTORE_READER_PORT":     "9010",
 		"DATASTORE_READER_PROTOCOL": "http",
 
-		"MESSAGING":        "fake",
 		"MESSAGE_BUS_HOST": "localhost",
 		"MESSAGE_BUS_PORT": "6379",
 		"REDIS_TEST_CONN":  "true",
@@ -145,21 +152,6 @@ func secret(name string, getSecret func(name string) (string, error), dev bool) 
 	return s, nil
 }
 
-func buildErrHandler() func(err error) {
-	return func(err error) {
-		if errors.Is(err, context.Canceled) {
-			return
-		}
-
-		var closing interface {
-			Closing()
-		}
-		if !errors.As(err, &closing) {
-			icclog.Info("Error: %v", err)
-		}
-	}
-}
-
 // buildAuth returns the auth service needed by the http server.
 func buildAuth(
 	ctx context.Context,
@@ -193,7 +185,7 @@ func buildAuth(
 
 		icclog.Info("Auth Service: %s", url)
 
-		a, err := auth.New(url, ctx.Done(), []byte(tokenKey), []byte(cookieKey))
+		a, err := auth.New(url, []byte(tokenKey), []byte(cookieKey))
 		if err != nil {
 			return nil, fmt.Errorf("creating auth connection: %w", err)
 		}
@@ -231,26 +223,12 @@ type messageBus interface {
 }
 
 func buildMessageBus(env map[string]string) (messageBus, error) {
-	serviceName := env["MESSAGING"]
-	icclog.Info("Messaging Service: %s", serviceName)
-
-	var conn messageBusRedis.Connection
-	switch serviceName {
-	case "redis":
-		redisAddress := env["MESSAGE_BUS_HOST"] + ":" + env["MESSAGE_BUS_PORT"]
-		c := messageBusRedis.NewConnection(redisAddress)
-		if env["REDIS_TEST_CONN"] == "true" {
-			if err := c.TestConn(); err != nil {
-				return nil, fmt.Errorf("connect to redis: %w", err)
-			}
+	redisAddress := env["MESSAGE_BUS_HOST"] + ":" + env["MESSAGE_BUS_PORT"]
+	conn := messageBusRedis.NewConnection(redisAddress)
+	if env["REDIS_TEST_CONN"] == "true" {
+		if err := conn.TestConn(); err != nil {
+			return nil, fmt.Errorf("connect to redis: %w", err)
 		}
-
-		conn = c
-
-	case "fake":
-		conn = messageBusRedis.BlockingConn{}
-	default:
-		return nil, fmt.Errorf("unknown messagin service `%s`", serviceName)
 	}
 
 	return &messageBusRedis.Redis{Conn: conn}, nil

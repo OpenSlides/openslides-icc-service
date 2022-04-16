@@ -20,7 +20,6 @@ FROM base as development
 
 RUN ["go", "install", "github.com/githubnemo/CompileDaemon@latest"]
 EXPOSE 9012
-ENV MESSAGING redis
 ENV AUTH ticket
 
 CMD CompileDaemon -log-prefix=false -build="go build ./cmd/icc" -command="./icc"
@@ -37,7 +36,6 @@ LABEL org.opencontainers.image.source="https://github.com/OpenSlides/openslides-
 COPY --from=builder /root/icc .
 COPY --from=builder /root/healthcheck .
 EXPOSE 9007
-ENV MESSAGING redis
 ENV AUTH ticket
 ENTRYPOINT ["/icc"]
 HEALTHCHECK CMD ["/healthcheck"]

@@ -19,11 +19,10 @@ go build ./cmd/icc
 
 ### With Docker
 
-The docker build uses the redis messaging service, the auth token and the real
-datastore service as default. Either configure it to use the fake services (see
-environment variables below) or make sure the service inside the docker
-container can connect to redis and the datastore-reader. For example with the
-docker argument --network host. The auth-secrets have to given as a file.
+The docker build uses the auth token. Either configure it to use the fake
+services (see environment variables below) or make sure the service inside the
+docker container can connect to redis and the datastore-reader. For example with
+the docker argument --network host. The auth-secrets have to given as a file.
 
 ```
 docker build . --tag openslides-icc
@@ -143,10 +142,6 @@ curl localhost:9007/system/icc/applause/send?meeting_id=1
 
 The argument meeting_id is required.
 
-### Chat 
-
-TODO
-
 
 ## Configuration
 
@@ -167,8 +162,6 @@ The Service uses the following environment variables:
 * `DATASTORE_READER_PORT`: Port of the datastore reader. The default is `9010`.
 * `DATASTORE_READER_PROTOCOL`: Protocol of the datastore reader. The default is
   `http`.
-* `MESSAGING`: Sets the type of messaging service. `fake`(default) or
-  `redis`.
 * `MESSAGE_BUS_HOST`: Host of the redis server. The default is `localhost`.
 * `MESSAGE_BUS_PORT`: Port of the redis server. The default is `6379`.
 * `REDIS_TEST_CONN`: Test the redis connection on startup. Disable on the cloud

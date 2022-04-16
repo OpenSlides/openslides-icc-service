@@ -40,19 +40,18 @@ type Notify struct {
 //
 // The New function is not blocking. The context is used to stop a goroutine
 // that is started by this function.
-func New(ctx context.Context, b Backend) *Notify {
+func New(b Backend) *Notify {
 	notify := Notify{
 		backend: b,
-		topic:   topic.New(topic.WithClosed[string](ctx.Done())),
+		topic:   topic.New[string](),
 	}
 
-	go notify.listen(ctx)
 	return &notify
 }
 
-// listen waits for Notify messages from the backend and saves them into the
+// Listen waits for Notify messages from the backend and saves them into the
 // topic.
-func (n *Notify) listen(ctx context.Context) {
+func (n *Notify) Listen(ctx context.Context) {
 	for {
 		m, err := n.backend.NotifyReceive(ctx)
 		if err != nil {

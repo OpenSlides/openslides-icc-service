@@ -42,10 +42,10 @@ type Applause struct {
 //
 // The New function is not blocking. The context is used to stop a goroutine
 // that is started by this function.
-func New(b Backend, db datastore.Getter, closed <-chan struct{}) *Applause {
+func New(b Backend, db datastore.Getter) *Applause {
 	notify := Applause{
 		backend:   b,
-		topic:     topic.New(topic.WithClosed[string](closed)),
+		topic:     topic.New[string](),
 		datastore: db,
 	}
 

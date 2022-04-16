@@ -72,19 +72,7 @@ func Error(w http.ResponseWriter, err error) {
 }
 
 func isConnectionClose(err error) bool {
-	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
-		// Client closes connection.
-		return true
-	}
-
-	var closing interface {
-		Closing()
-	}
-	if errors.As(err, &closing) {
-		// Server is shutting down.
-		return true
-	}
-	return false
+	return errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded)
 }
 
 // AuthMiddleware checks the user id of the request.

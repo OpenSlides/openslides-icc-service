@@ -12,11 +12,12 @@ import (
 )
 
 func TestSend(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
+	shutdownCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	backend := newBackendStrub()
-	n := notify.New(ctx, backend)
+	n := notify.New(backend)
+	go n.Listen(shutdownCtx)
 
 	t.Run("invalid json", func(t *testing.T) {
 		defer backend.reset()
@@ -110,11 +111,12 @@ func TestSend(t *testing.T) {
 }
 
 func TestReceive(t *testing.T) {
-	testCtx, cancel := context.WithCancel(context.Background())
+	shutdownCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	backend := newBackendStrub()
-	n := notify.New(testCtx, backend)
+	n := notify.New(backend)
+	go n.Listen(shutdownCtx)
 
 	_, next := n.Receive(1, 2)
 
