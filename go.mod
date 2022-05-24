@@ -6,7 +6,7 @@ require (
 	github.com/OpenSlides/openslides-autoupdate-service v0.4.1-0.20220416070241-9a94afdf8891
 	github.com/gomodule/redigo v1.8.8
 	github.com/google/go-cmp v0.5.7 // indirect
-	github.com/ory/dockertest/v3 v3.8.1
+	github.com/ory/dockertest/v3 v3.9.0
 	github.com/ostcar/topic v0.4.1
 	golang.org/x/net v0.0.0-20220412020605-290c469a71a5 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
