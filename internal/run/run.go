@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/OpenSlides/openslides-autoupdate-service/pkg/auth"
@@ -118,6 +119,7 @@ func defaultEnv(environment []string) map[string]string {
 		"AUTH_PORT":     "9004",
 
 		"OPENSLIDES_DEVELOPMENT": "false",
+		"MAX_PARALLEL_KEYS":      "1000",
 	}
 
 	for _, value := range environment {
@@ -240,6 +242,12 @@ func buildDatastore(env map[string]string, updater datastore.Updater) (*datastor
 	host := env["DATASTORE_READER_HOST"]
 	port := env["DATASTORE_READER_PORT"]
 	url := protocol + "://" + host + ":" + port
-	source := datastore.NewSourceDatastore(url, updater)
+
+	maxParallel, err := strconv.Atoi(env["MAX_PARALLEL_KEYS"])
+	if err != nil {
+		return nil, fmt.Errorf("environmentvariable MAX_PARALLEL_KEYS has to be a number, not %s", env["MAX_PARALLEL_KEYS"])
+	}
+
+	source := datastore.NewSourceDatastore(url, updater, maxParallel)
 	return datastore.New(source, nil, nil), nil
 }

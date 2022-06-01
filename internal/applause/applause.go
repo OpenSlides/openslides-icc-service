@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/OpenSlides/openslides-autoupdate-service/pkg/datastore"
+	"github.com/OpenSlides/openslides-autoupdate-service/pkg/datastore/dsfetch"
 	"github.com/OpenSlides/openslides-icc-service/internal/iccerror"
 	"github.com/ostcar/topic"
 )
@@ -67,7 +68,7 @@ func (a *Applause) Send(ctx context.Context, meetingID, userID int) error {
 		return iccerror.NewMessageError(iccerror.ErrNotAllowed, "Anonymous is not allowed to applause. Please be quiet.")
 	}
 
-	fetcher := datastore.NewRequest(a.datastore)
+	fetcher := dsfetch.New(a.datastore)
 
 	applauseEnabled, err := fetcher.Meeting_ApplauseEnable(meetingID).Value(ctx)
 	if err != nil {
@@ -103,7 +104,7 @@ func (a *Applause) Send(ctx context.Context, meetingID, userID int) error {
 
 // CanReceive returns an error, if the user can not receive applause.
 func (a *Applause) CanReceive(ctx context.Context, meetingID, userID int) error {
-	fetcher := datastore.NewRequest(a.datastore)
+	fetcher := dsfetch.New(a.datastore)
 	if userID == 0 {
 		anonymousEnabled, err := fetcher.Meeting_EnableAnonymous(meetingID).Value(ctx)
 		if err != nil {
@@ -259,10 +260,10 @@ func (a *Applause) PruneOldData(ctx context.Context) {
 
 // presentUser returns the number of users in this meeting.
 func (a *Applause) presentUser(ctx context.Context, meetingID int) (int, error) {
-	fetch := datastore.NewRequest(a.datastore)
+	fetch := dsfetch.New(a.datastore)
 	ids, err := fetch.Meeting_PresentUserIDs(meetingID).Value(ctx)
 	if err != nil {
-		var errDoesNotExist datastore.DoesNotExistError
+		var errDoesNotExist dsfetch.DoesNotExistError
 		if !errors.As(err, &errDoesNotExist) {
 			return 0, fmt.Errorf("get present users for meeting %d: %w", meetingID, err)
 		}
