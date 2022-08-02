@@ -123,7 +123,7 @@ from the autoupdate-service repo.
 To listen to messages, you can use this command:
 
 ```
-curl -N localhost:9007/system/icc/notify?meeting_id=1
+curl -N localhost:9007/system/icc/applause?meeting_id=1
 ```
 
 The meeting_id argument is required.
