@@ -3,16 +3,16 @@ module github.com/OpenSlides/openslides-icc-service
 go 1.18
 
 require (
-	github.com/OpenSlides/openslides-autoupdate-service v0.4.1-0.20220610093516-04a35189807c
+	github.com/OpenSlides/openslides-autoupdate-service v0.4.1-0.20220802143126-55f81fb264bf
 	github.com/gomodule/redigo v1.8.9
 	github.com/google/go-cmp v0.5.8 // indirect
 	github.com/ory/dockertest/v3 v3.9.1
 	github.com/ostcar/topic v0.4.1
-	golang.org/x/net v0.0.0-20220607020251-c690dde0001d // indirect
+	golang.org/x/net v0.0.0-20220728211354-c7608f3a8462 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
-require golang.org/x/sys v0.0.0-20220608164250-635b8c9b7f68
+require golang.org/x/sys v0.0.0-20220731174439-a90be440212d
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
@@ -25,7 +25,7 @@ require (
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang-jwt/jwt/v4 v4.4.1 // indirect
+	github.com/golang-jwt/jwt/v4 v4.4.2 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
@@ -34,9 +34,9 @@ require (
 	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/opencontainers/runc v1.1.3 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/sirupsen/logrus v1.8.1 // indirect
+	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
-	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f // indirect
+	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
 )

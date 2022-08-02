@@ -123,7 +123,7 @@ from the autoupdate-service repo.
 To listen to messages, you can use this command:
 
 ```
-curl -N localhot:9007/system/icc/notify?meeting_id=5
+curl -N localhost:9007/system/icc/notify?meeting_id=1
 ```
 
 The meeting_id argument is required.
@@ -174,6 +174,8 @@ The Service uses the following environment variables:
   below) are not given. The default is `false`.
 * `MAX_PARALLEL_KEYS`: Max keys that are send in one request to the datastore.
   The default is `1000`.
+* `DATASTORE_TIMEOUT`: Time until a request to the datastore times out. The
+  default is `3s`.
 
 
 ### Secrets
