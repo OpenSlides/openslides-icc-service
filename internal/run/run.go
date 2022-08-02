@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -74,7 +75,11 @@ func Run(ctx context.Context, environment []string, secret func(name string) (st
 	applause.HandleSend(mux, applauseService, auth)
 
 	listenAddr := ":" + env["ICC_PORT"]
-	srv := &http.Server{Addr: listenAddr, Handler: mux}
+	srv := &http.Server{
+		Addr:        listenAddr,
+		Handler:     mux,
+		BaseContext: func(net.Listener) context.Context { return ctx },
+	}
 
 	// Shutdown logic in separate goroutine.
 	wait := make(chan error)

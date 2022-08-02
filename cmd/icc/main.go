@@ -29,21 +29,20 @@ func main() {
 	}
 }
 
-// interruptContext works like signal.NotifyContext
+// interruptContext works like signal.NotifyContext. It returns a context that
+// is canceled, when a signal is received.
 //
-// In only listens on os.Interrupt. If the signal is received two times,
-// os.Exit(1) is called.
+// It listens on os.Interrupt and unix.SIGTERM. If the signal is received two
+// times, os.Exit(2) is called.
 func interruptContext() (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
-		sigint := make(chan os.Signal, 1)
-		signal.Notify(sigint, os.Interrupt, unix.SIGTERM)
-		<-sigint
+		sig := make(chan os.Signal, 1)
+		signal.Notify(sig, os.Interrupt, unix.SIGTERM)
+		<-sig
 		cancel()
-
-		// If the signal was send for the second time, make a hard cut.
-		<-sigint
-		os.Exit(1)
+		<-sig
+		os.Exit(2)
 	}()
 	return ctx, cancel
 }
