@@ -79,17 +79,9 @@ func (a *Applause) Send(ctx context.Context, meetingID, userID int) error {
 		return iccerror.NewMessageError(iccerror.ErrNotAllowed, "applause is not enabled in meeting %d. Please be quiet.", meetingID)
 	}
 
-	meetingUserIDs, err := fetcher.Meeting_UserIDs(meetingID).Value(ctx)
+	inMeeting, err := isInMeeting(ctx, fetcher, userID, meetingID)
 	if err != nil {
-		return fmt.Errorf("fetching meeting users: %w", err)
-	}
-
-	var inMeeting bool
-	for _, u := range meetingUserIDs {
-		if u == userID {
-			inMeeting = true
-			break
-		}
+		return fmt.Errorf("checking if user is in meeting: %w", err)
 	}
 
 	if !inMeeting {
@@ -100,6 +92,29 @@ func (a *Applause) Send(ctx context.Context, meetingID, userID int) error {
 		return fmt.Errorf("publish applause in backend: %w", err)
 	}
 	return nil
+}
+
+func isInMeeting(ctx context.Context, fetch *dsfetch.Fetch, userID, meetingID int) (bool, error) {
+	superadmin, err := isSuperadmin(ctx, fetch, userID)
+	if err != nil {
+		return false, fmt.Errorf("checking for superadmin: %w", err)
+	}
+
+	if superadmin {
+		return true, nil
+	}
+
+	meetingUserIDs, err := fetch.Meeting_UserIDs(meetingID).Value(ctx)
+	if err != nil {
+		return false, fmt.Errorf("fetching meeting users: %w", err)
+	}
+
+	for _, u := range meetingUserIDs {
+		if u == userID {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 // CanReceive returns an error, if the user can not receive applause.
@@ -117,17 +132,9 @@ func (a *Applause) CanReceive(ctx context.Context, meetingID, userID int) error 
 		return nil
 	}
 
-	meetingUserIDs, err := fetcher.Meeting_UserIDs(meetingID).Value(ctx)
+	inMeeting, err := isInMeeting(ctx, fetcher, userID, meetingID)
 	if err != nil {
-		return fmt.Errorf("fetching meeting users: %w", err)
-	}
-
-	var inMeeting bool
-	for _, u := range meetingUserIDs {
-		if u == userID {
-			inMeeting = true
-			break
-		}
+		return fmt.Errorf("checking if user is in meeting: %w", err)
 	}
 
 	if !inMeeting {
@@ -286,4 +293,17 @@ func contextSleep(ctx context.Context, d time.Duration) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	}
+}
+
+func isSuperadmin(ctx context.Context, ds *dsfetch.Fetch, userID int) (bool, error) {
+	if userID == 0 {
+		return false, nil
+	}
+
+	oml, err := ds.User_OrganizationManagementLevel(userID).Value(ctx)
+	if err != nil {
+		return false, fmt.Errorf("getting oml of user %d: %w", userID, err)
+	}
+
+	return oml == "superadmin", nil
 }
