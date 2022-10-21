@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
+	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -26,7 +28,7 @@ import (
 //
 // The service is configured by the argument `environment`. It expect strings in
 // the format `KEY=VALUE`, like the output from `os.Environmen()`.
-func Run(ctx context.Context, environment []string, secret func(name string) (string, error)) error {
+func Run(ctx context.Context, environment []string) error {
 	env := defaultEnv(environment)
 
 	errHandler := func(err error) {
@@ -42,21 +44,21 @@ func Run(ctx context.Context, environment []string, secret func(name string) (st
 		return fmt.Errorf("building message bus: %w", err)
 	}
 
-	auth, err := buildAuth(
-		ctx,
+	auth, authBackground, err := initAuth(
 		env,
-		secret,
 		messageBus,
 		errHandler,
 	)
 	if err != nil {
 		return fmt.Errorf("building auth: %w", err)
 	}
+	defer authBackground(ctx)
 
-	ds, err := buildDatastore(env, messageBus)
+	ds, dsBackground, err := initDatastore(ctx, env, messageBus, errHandler)
 	if err != nil {
 		return fmt.Errorf("build datastore service: %w", err)
 	}
+	defer dsBackground(ctx)
 
 	backend := redis.New(env["ICC_REDIS_HOST"] + ":" + env["ICC_REDIS_PORT"])
 
@@ -111,6 +113,11 @@ func defaultEnv(environment []string) map[string]string {
 		"ICC_REDIS_HOST": "localhost",
 		"ICC_REDIS_PORT": "6379",
 
+		"DATASTORE_DATABASE_HOST": "localhost",
+		"DATASTORE_DATABASE_PORT": "5432",
+		"DATASTORE_DATABASE_USER": "openslides",
+		"DATASTORE_DATABASE_NAME": "openslides",
+
 		"DATASTORE_READER_HOST":     "localhost",
 		"DATASTORE_READER_PORT":     "9010",
 		"DATASTORE_READER_PROTOCOL": "http",
@@ -140,76 +147,116 @@ func defaultEnv(environment []string) map[string]string {
 	return env
 }
 
-func secret(name string, getSecret func(name string) (string, error), dev bool) (string, error) {
-	defaultSecrets := map[string]string{
-		"auth_token_key":  auth.DebugTokenKey,
-		"auth_cookie_key": auth.DebugCookieKey,
-	}
+func secret(env map[string]string, name string) ([]byte, error) {
+	useDev, _ := strconv.ParseBool(env["OPENSLIDES_DEVELOPMENT"])
 
-	d, ok := defaultSecrets[name]
-	if !ok {
-		return "", fmt.Errorf("unknown secret %s", name)
-	}
-
-	s, err := getSecret(name)
-	if err != nil {
-		if !dev {
-			return "", fmt.Errorf("can not read secret %s: %w", s, err)
+	if useDev {
+		debugSecred := "openslides"
+		switch name {
+		case "auth_token_key":
+			debugSecred = auth.DebugTokenKey
+		case "auth_cookie_key":
+			debugSecred = auth.DebugCookieKey
 		}
-		s = d
+
+		return []byte(debugSecred), nil
 	}
-	return s, nil
+
+	path := path.Join(env["SECRETS_PATH"], name)
+	secret, err := os.ReadFile(path)
+	if err != nil {
+		// TODO EXTERMAL ERROR
+		return nil, fmt.Errorf("reading `%s`: %w", path, err)
+	}
+
+	return secret, nil
 }
 
-// buildAuth returns the auth service needed by the http server.
-func buildAuth(
-	ctx context.Context,
-	env map[string]string,
-	getSecret func(name string) (string, error),
-	receiver auth.LogoutEventer,
-	errHandler func(error),
-) (icchttp.Authenticater, error) {
+func initAuth(env map[string]string, messageBus auth.LogoutEventer, errHandler func(error)) (icchttp.Authenticater, func(context.Context), error) {
 	method := env["AUTH"]
+
 	switch method {
 	case "ticket":
-		icclog.Info("Auth Method: ticket")
-		tokenKey, err := secret("auth_token_key", getSecret, env["OPENSLIDES_DEVELOPMENT"] != "false")
+		tokenKey, err := secret(env, "auth_token_key")
 		if err != nil {
-			return nil, fmt.Errorf("getting token secret: %w", err)
+			return nil, nil, fmt.Errorf("getting token secret: %w", err)
 		}
 
-		cookieKey, err := secret("auth_cookie_key", getSecret, env["OPENSLIDES_DEVELOPMENT"] != "false")
+		cookieKey, err := secret(env, "auth_cookie_key")
 		if err != nil {
-			return nil, fmt.Errorf("getting cookie secret: %w", err)
+			return nil, nil, fmt.Errorf("getting cookie secret: %w", err)
 		}
 
-		if tokenKey == auth.DebugTokenKey || cookieKey == auth.DebugCookieKey {
-			icclog.Info("Auth with debug key")
-		}
-
-		protocol := env["AUTH_PROTOCOL"]
-		host := env["AUTH_HOST"]
-		port := env["AUTH_PORT"]
-		url := protocol + "://" + host + ":" + port
-
-		icclog.Info("Auth Service: %s", url)
-
-		a, err := auth.New(url, []byte(tokenKey), []byte(cookieKey))
+		url := fmt.Sprintf("%s://%s:%s", env["AUTH_PROTOCOL"], env["AUTH_HOST"], env["AUTH_PORT"])
+		a, err := auth.New(url, tokenKey, cookieKey)
 		if err != nil {
-			return nil, fmt.Errorf("creating auth connection: %w", err)
+			return nil, nil, fmt.Errorf("creating auth service: %w", err)
 		}
 
-		go a.ListenOnLogouts(ctx, receiver, errHandler)
-		go a.PruneOldData(ctx)
-		return a, nil
+		backgroundtask := func(ctx context.Context) {
+			go a.ListenOnLogouts(ctx, messageBus, errHandler)
+			go a.PruneOldData(ctx)
+		}
+
+		return a, backgroundtask, nil
 
 	case "fake":
-		icclog.Info("Auth Method: FakeAuth (User ID 1 for all requests)")
-		return authStub(1), nil
+		fmt.Println("Auth Method: FakeAuth (User ID 1 for all requests)")
+		return auth.Fake(1), func(context.Context) {}, nil
 
 	default:
-		return nil, fmt.Errorf("unknown auth method %s", method)
+		// TODO LAST ERROR
+		return nil, nil, fmt.Errorf("unknown auth method: %s", method)
 	}
+}
+
+func initDatastore(ctx context.Context, env map[string]string, mb messageBus, handleError func(error)) (*datastore.Datastore, func(context.Context), error) {
+	maxParallel, err := strconv.Atoi(env["MAX_PARALLEL_KEYS"])
+	if err != nil {
+		return nil, nil, fmt.Errorf("environment variable MAX_PARALLEL_KEYS has to be a number, not %s", env["MAX_PARALLEL_KEYS"])
+	}
+
+	timeout, err := parseDuration(env["DATASTORE_TIMEOUT"])
+	if err != nil {
+		return nil, nil, fmt.Errorf("environment variable DATASTORE_TIMEOUT has to be a duration like 3s, not %s: %w", env["DATASTORE_TIMEOUT"], err)
+	}
+
+	datastoreSource := datastore.NewSourceDatastore(
+		env["DATASTORE_READER_PROTOCOL"]+"://"+env["DATASTORE_READER_HOST"]+":"+env["DATASTORE_READER_PORT"],
+		mb,
+		maxParallel,
+		timeout,
+	)
+
+	password, err := secret(env, "postgres_password")
+	if err != nil {
+		return nil, nil, fmt.Errorf("getting postgres password: %w", err)
+	}
+
+	addr := fmt.Sprintf(
+		"postgres://%s@%s:%s/%s",
+		env["DATASTORE_DATABASE_USER"],
+		env["DATASTORE_DATABASE_HOST"],
+		env["DATASTORE_DATABASE_PORT"],
+		env["DATASTORE_DATABASE_NAME"],
+	)
+
+	postgresSource, err := datastore.NewSourcePostgres(ctx, addr, string(password), datastoreSource)
+	if err != nil {
+		return nil, nil, fmt.Errorf("creating connection to postgres: %w", err)
+	}
+
+	ds := datastore.New(
+		postgresSource,
+		nil,
+		datastoreSource,
+	)
+
+	background := func(ctx context.Context) {
+		go ds.ListenOnUpdates(ctx, handleError)
+	}
+
+	return ds, background, nil
 }
 
 // authStub implements the authenticater interface. It allways returs the given

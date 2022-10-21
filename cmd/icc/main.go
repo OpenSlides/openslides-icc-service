@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"io"
 	"log"
 	"strconv"
 
@@ -24,7 +22,7 @@ func main() {
 		icclog.SetDebugLogger(log.New(os.Stderr, "DEBUG ", log.LstdFlags))
 	}
 
-	if err := run.Run(ctx, os.Environ(), secret); err != nil {
+	if err := run.Run(ctx, os.Environ()); err != nil {
 		icclog.Info("Error: %v", err)
 	}
 }
@@ -45,18 +43,4 @@ func interruptContext() (context.Context, context.CancelFunc) {
 		os.Exit(2)
 	}()
 	return ctx, cancel
-}
-
-func secret(name string) (string, error) {
-	f, err := os.Open("/run/secrets/" + name)
-	if err != nil {
-		return "", err
-	}
-
-	secret, err := io.ReadAll(f)
-	if err != nil {
-		return "", fmt.Errorf("reading `/run/secrets/%s`: %w", name, err)
-	}
-
-	return string(secret), nil
 }
