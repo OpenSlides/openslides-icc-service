@@ -17,7 +17,7 @@ func TestHandleSend(t *testing.T) {
 
 	t.Run("Anonymous", func(t *testing.T) {
 		auther := icctest.AutherStub{}
-		applauser := applauserStrub{}
+		applauser := applauserStub{}
 		mux := http.NewServeMux()
 		applause.HandleSend(mux, &applauser, &auther)
 		resp := httptest.NewRecorder()
@@ -41,7 +41,7 @@ func TestHandleSend(t *testing.T) {
 		auther := icctest.AutherStub{
 			UserID: 1,
 		}
-		applauser := applauserStrub{}
+		applauser := applauserStub{}
 		mux := http.NewServeMux()
 		applause.HandleSend(mux, &applauser, &auther)
 		resp := httptest.NewRecorder()
@@ -63,7 +63,7 @@ func TestHandleSend(t *testing.T) {
 
 	t.Run("Internal error", func(t *testing.T) {
 		myError := errors.New("Test error")
-		applauser := applauserStrub{
+		applauser := applauserStub{
 			expectedErr: myError,
 		}
 		auther := icctest.AutherStub{
