@@ -21,17 +21,18 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v3
 
-    - name: Start With golang
-      run: |
-        go build ./cmd/icc
-        timeout --preserve-status --signal=SIGINT 2s ./icc 
-
     - name: create secrets
       run: |
         mkdir secrets
         printf "password" > secrets/postgres_password
         printf "my_token_key" > secrets/auth_token_key 
         printf "my_cookie_key" > secrets/auth_cookie_key
+
+    - name: Start With golang
+      run: |
+        export SECRETS_PATH=secrets
+        go build
+        timeout --preserve-status --signal=SIGINT 2s ./openslides-icc-service
 
     - name: Start With Docker
       run: |

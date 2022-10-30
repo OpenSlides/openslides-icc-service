@@ -10,9 +10,32 @@ browser has to connect to the service with http2 and therefore needs https.
 
 ## Start
 
+The service needs some secrets to run. You can create them with:
+
+```
+mkdir secrets
+printf "password" > secrets/postgres_password
+printf "my_token_key" > secrets/auth_token_key 
+printf "my_cookie_key" > secrets/auth_cookie_key
+```
+
+It also needs a running postgres and redis instance. You can start one with:
+
+```
+docker run  --network host -e POSTGRES_PASSWORD=password -e POSTGRES_USER=openslides -e POSTGRES_DB=openslides postgres:11
+```
+
+and
+
+```
+docker run --network host redis
+```
+
+
 ### With Golang
 
 ```
+export SECRETS_PATH=secrets
 go build ./cmd/icc
 ./icc
 ```
@@ -21,7 +44,7 @@ go build ./cmd/icc
 
 The docker build uses the auth token. Either configure it to use the fake
 services (see environment variables below) or make sure the service inside the
-docker container can connect to redis and the datastore-reader. For example with
+docker container can connect to redis and postgres. For example with
 the docker argument --network host. The auth-secrets have to given as a file.
 
 ```
@@ -31,8 +54,6 @@ printf "my_cookie_key" > auth_cookie_key
 docker run --network host -v $PWD/auth_token_key:/run/secrets/auth_token_key -v $PWD/auth_cookie_key:/run/secrets/auth_cookie_key openslides-icc
 ```
 
-It uses the host network to connect to redis.
-
 
 ### With Auto Restart
 
@@ -41,7 +62,7 @@ To restart the service when ever a source file has shanged, the tool
 
 ```
 go install github.com/githubnemo/CompileDaemon@latest
-CompileDaemon -log-prefix=false -build "go build ./cmd/icc" -command "./icc"
+CompileDaemon -log-prefix=false -build "go build" -command "./openslides-icc-service"
 ```
 
 The make target `build-dev` creates a docker image that uses this tool. The
