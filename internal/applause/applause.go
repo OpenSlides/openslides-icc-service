@@ -106,17 +106,12 @@ func isInMeeting(ctx context.Context, fetch *dsfetch.Fetch, userID, meetingID in
 		return true, nil
 	}
 
-	meetingUserIDs, err := fetch.Meeting_UserIDs(meetingID).Value(ctx)
+	ids, err := fetch.User_GroupIDs(userID, meetingID).Value(ctx)
 	if err != nil {
-		return false, fmt.Errorf("fetching meeting users: %w", err)
+		return false, fmt.Errorf("checking for user groups: %w", err)
 	}
 
-	for _, u := range meetingUserIDs {
-		if u == userID {
-			return true, nil
-		}
-	}
-	return false, nil
+	return len(ids) > 0, nil
 }
 
 // CanReceive returns an error, if the user can not receive applause.
@@ -162,7 +157,7 @@ func (a *Applause) Receive(ctx context.Context, tid uint64, meetingID int) (newT
 			return 0, MSG{}, fmt.Errorf("receiving message from topic: %w", err)
 		}
 
-		// We are intressted in the last messaeg that has a entry for out
+		// We are intressted in the last message that has a entry for our
 		// meeting. We go backwards throw the messages and return, if we find
 		// something.
 		for i := len(messages) - 1; i >= 0; i-- {
