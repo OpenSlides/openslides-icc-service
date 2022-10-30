@@ -18,7 +18,7 @@ func TestApplauseCanReceiveInMeeting(t *testing.T) {
 		ds := dsmock.Stub(dsmock.YAMLData(`---
 		user/5/id: 5
 		`))
-		app := applause.New(backend, ds)
+		app, _ := applause.New(backend, ds)
 
 		err := app.CanReceive(ctx, 1, 5)
 
@@ -32,7 +32,7 @@ func TestApplauseCanReceiveInMeeting(t *testing.T) {
 		ds := dsmock.Stub(dsmock.YAMLData(`---
 		meeting/1/enable_anonymous: false
 		`))
-		app := applause.New(backend, ds)
+		app, _ := applause.New(backend, ds)
 
 		err := app.CanReceive(ctx, 1, 0)
 
@@ -46,7 +46,7 @@ func TestApplauseCanReceiveInMeeting(t *testing.T) {
 		ds := dsmock.Stub(dsmock.YAMLData(`---
 		meeting/1/enable_anonymous: true
 		`))
-		app := applause.New(backend, ds)
+		app, _ := applause.New(backend, ds)
 
 		err := app.CanReceive(ctx, 1, 0)
 
@@ -62,7 +62,7 @@ func TestApplauseCanReceiveInMeeting(t *testing.T) {
 
 		user/5/id: 5
 		`))
-		app := applause.New(backend, ds)
+		app, _ := applause.New(backend, ds)
 
 		err := app.CanReceive(ctx, 1, 5)
 
@@ -78,7 +78,7 @@ func TestApplauseCanReceiveInMeeting(t *testing.T) {
 
 		user/5/group_$1_ids: [1]
 		`))
-		app := applause.New(backend, ds)
+		app, _ := applause.New(backend, ds)
 
 		err := app.CanReceive(ctx, 1, 5)
 
@@ -94,7 +94,7 @@ func TestApplauseCanReceiveInMeeting(t *testing.T) {
 
 		user/5/organization_management_level: superadmin
 		`))
-		app := applause.New(backend, ds)
+		app, _ := applause.New(backend, ds)
 
 		err := app.CanReceive(ctx, 1, 5)
 
