@@ -16,8 +16,8 @@ func TestSend(t *testing.T) {
 	defer cancel()
 
 	backend := newBackendStrub()
-	n := notify.New(backend)
-	go n.Listen(shutdownCtx)
+	n, bg := notify.New(backend)
+	go bg(shutdownCtx, nil)
 
 	t.Run("invalid json", func(t *testing.T) {
 		defer backend.reset()
@@ -115,8 +115,8 @@ func TestReceive(t *testing.T) {
 	defer cancel()
 
 	backend := newBackendStrub()
-	n := notify.New(backend)
-	go n.Listen(shutdownCtx)
+	n, bg := notify.New(backend)
+	go bg(shutdownCtx, nil)
 
 	_, next := n.Receive(1, 2)
 

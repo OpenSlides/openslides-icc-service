@@ -40,10 +40,7 @@ type Applause struct {
 }
 
 // New returns an initialized state of the notify service.
-//
-// The New function is not blocking. The context is used to stop a goroutine
-// that is started by this function.
-func New(b Backend, db datastore.Getter) *Applause {
+func New(b Backend, db datastore.Getter) (*Applause, func(context.Context, func(error))) {
 	notify := Applause{
 		backend:   b,
 		topic:     topic.New[string](),
@@ -53,7 +50,12 @@ func New(b Backend, db datastore.Getter) *Applause {
 	// Make sure the topic is not empty.
 	notify.topic.Publish("")
 
-	return &notify
+	background := func(ctx context.Context, errHandler func(error)) {
+		go notify.loop(ctx, errHandler)
+		go notify.pruneOldData(ctx)
+	}
+
+	return &notify, background
 }
 
 // MSG contians the current applause level and number of present users.
@@ -180,9 +182,9 @@ func (a *Applause) LastID() uint64 {
 	return a.topic.LastID()
 }
 
-// Loop fetches the applause from the backend and saves it for the clients to
+// loop fetches the applause from the backend and saves it for the clients to
 // fetch.
-func (a *Applause) Loop(ctx context.Context, errHandler func(error)) {
+func (a *Applause) loop(ctx context.Context, errHandler func(error)) {
 	if errHandler == nil {
 		errHandler = func(error) {}
 	}
@@ -250,8 +252,8 @@ func (a *Applause) toMSG(ctx context.Context, meetingID, level int) (MSG, error)
 	}, nil
 }
 
-// PruneOldData removes applause data.
-func (a *Applause) PruneOldData(ctx context.Context) {
+// pruneOldData removes applause data.
+func (a *Applause) pruneOldData(ctx context.Context) {
 	tick := time.NewTicker(5 * time.Minute)
 	defer tick.Stop()
 

@@ -6,13 +6,12 @@ RUN apk add git
 COPY go.mod go.sum ./
 RUN go mod download
 
-COPY cmd cmd
+COPY main.go main.go
 COPY internal internal
 
 # Build service in seperate stage.
 FROM base as builder
 RUN CGO_ENABLED=0 go build ./cmd/icc
-RUN CGO_ENABLED=0 go build ./cmd/healthcheck
 
 
 # Development build.
@@ -22,7 +21,7 @@ RUN ["go", "install", "github.com/githubnemo/CompileDaemon@latest"]
 EXPOSE 9012
 ENV AUTH ticket
 
-CMD CompileDaemon -log-prefix=false -build="go build ./cmd/icc" -command="./icc"
+CMD CompileDaemon -log-prefix=false -build="go build" -command="./icc"
 
 
 # Productive build
@@ -33,9 +32,8 @@ LABEL org.opencontainers.image.description="With the OpenSlides ICC Service clie
 LABEL org.opencontainers.image.licenses="MIT"
 LABEL org.opencontainers.image.source="https://github.com/OpenSlides/openslides-icc-service"
 
-COPY --from=builder /root/icc .
-COPY --from=builder /root/healthcheck .
+COPY --from=builder /root/openslides-icc-service .
 EXPOSE 9007
 ENV AUTH ticket
-ENTRYPOINT ["/icc"]
-HEALTHCHECK CMD ["/healthcheck"]
+ENTRYPOINT ["/openslides-icc-service"]
+HEALTHCHECK CMD ["/openslides-icc-service", "health"]

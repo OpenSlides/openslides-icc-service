@@ -40,18 +40,26 @@ type Notify struct {
 //
 // The New function is not blocking. The context is used to stop a goroutine
 // that is started by this function.
-func New(b Backend) *Notify {
+func New(b Backend) (*Notify, func(context.Context, func(error))) {
 	notify := Notify{
 		backend: b,
 		topic:   topic.New[string](),
 	}
 
-	return &notify
+	background := func(ctx context.Context, errHandler func(error)) {
+		go notify.listen(ctx, errHandler)
+	}
+
+	return &notify, background
 }
 
-// Listen waits for Notify messages from the backend and saves them into the
+// listen waits for Notify messages from the backend and saves them into the
 // topic.
-func (n *Notify) Listen(ctx context.Context) {
+func (n *Notify) listen(ctx context.Context, errhandler func(error)) {
+	if errhandler == nil {
+		errhandler = func(error) {}
+	}
+
 	for {
 		m, err := n.backend.NotifyReceive(ctx)
 		if err != nil {
@@ -59,7 +67,7 @@ func (n *Notify) Listen(ctx context.Context) {
 				return
 			}
 
-			icclog.Info("Error: can not receive data from backend: %v", err)
+			errhandler(fmt.Errorf("receicing data from backend: %w", err))
 			time.Sleep(5 * time.Second)
 			continue
 		}
