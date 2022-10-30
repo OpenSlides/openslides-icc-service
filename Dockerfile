@@ -11,7 +11,7 @@ COPY internal internal
 
 # Build service in seperate stage.
 FROM base as builder
-RUN CGO_ENABLED=0 go build ./cmd/icc
+RUN CGO_ENABLED=0 go build
 
 
 # Development build.
