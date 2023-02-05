@@ -1,6 +1,6 @@
 module github.com/OpenSlides/openslides-icc-service
 
-go 1.19
+go 1.20
 
 require (
 	github.com/OpenSlides/openslides-autoupdate-service v0.4.1-0.20221114161157-a9fdb66c37a8
