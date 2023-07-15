@@ -10,7 +10,6 @@ import (
 	"os"
 
 	"github.com/OpenSlides/openslides-autoupdate-service/pkg/auth"
-	"github.com/OpenSlides/openslides-autoupdate-service/pkg/datastore"
 	"github.com/OpenSlides/openslides-autoupdate-service/pkg/environment"
 	messageBusRedis "github.com/OpenSlides/openslides-autoupdate-service/pkg/redis"
 	"github.com/OpenSlides/openslides-icc-service/internal/applause"
@@ -106,11 +105,10 @@ func initService(lookup environment.Environmenter) (func(context.Context) error,
 	messageBus := messageBusRedis.New(lookup)
 
 	// Datastore Service.
-	datastoreService, dsBackground, err := datastore.New(lookup, messageBus)
+	database, err := applause.Flow(lookup, messageBus)
 	if err != nil {
-		return nil, fmt.Errorf("init datastore: %w", err)
+		return nil, fmt.Errorf("init database: %w", err)
 	}
-	backgroundTasks = append(backgroundTasks, dsBackground)
 
 	// Auth Service.
 	authService, authBackground := auth.New(lookup, messageBus)
@@ -121,7 +119,7 @@ func initService(lookup environment.Environmenter) (func(context.Context) error,
 	notifyService, notifyBackground := notify.New(backend)
 	backgroundTasks = append(backgroundTasks, notifyBackground)
 
-	applauseService, applauseBackground := applause.New(backend, datastoreService)
+	applauseService, applauseBackground := applause.New(backend, database)
 	backgroundTasks = append(backgroundTasks, applauseBackground)
 
 	service := func(ctx context.Context) error {

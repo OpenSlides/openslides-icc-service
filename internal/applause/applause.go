@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/OpenSlides/openslides-autoupdate-service/pkg/datastore"
 	"github.com/OpenSlides/openslides-autoupdate-service/pkg/datastore/dsfetch"
+	"github.com/OpenSlides/openslides-autoupdate-service/pkg/datastore/flow"
 	"github.com/OpenSlides/openslides-icc-service/internal/iccerror"
 	"github.com/ostcar/topic"
 )
@@ -36,11 +36,11 @@ type Backend interface {
 type Applause struct {
 	backend   Backend
 	topic     *topic.Topic[string]
-	datastore datastore.Getter
+	datastore flow.Getter
 }
 
 // New returns an initialized state of the notify service.
-func New(b Backend, db datastore.Getter) (*Applause, func(context.Context, func(error))) {
+func New(b Backend, db flow.Getter) (*Applause, func(context.Context, func(error))) {
 	notify := Applause{
 		backend:   b,
 		topic:     topic.New[string](),
@@ -121,7 +121,6 @@ func (a *Applause) CanReceive(ctx context.Context, meetingID, userID int) error 
 		anonymousEnabled, err := fetcher.Meeting_EnableAnonymous(meetingID).Value(ctx)
 		if err != nil {
 			return fmt.Errorf("fetching anonymous enabled: %w", err)
-
 		}
 		if !anonymousEnabled {
 			return iccerror.NewMessageError(iccerror.ErrNotAllowed, "Anonymous is not enabled")
