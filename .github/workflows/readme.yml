@@ -9,43 +9,43 @@ jobs:
       redis:
         image: redis
         ports:
-        - 6379:6379
+          - 6379:6379
 
     steps:
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: '1.22'
-      id: go
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+        id: go
 
-    - name: Check out code
-      uses: actions/checkout@v4
+      - name: Check out code
+        uses: actions/checkout@v4
 
-    - name: create secrets
-      run: |
-        mkdir secrets
-        printf "password" > secrets/postgres_password
-        printf "my_token_key" > secrets/auth_token_key 
-        printf "my_cookie_key" > secrets/auth_cookie_key
+      - name: create secrets
+        run: |
+          mkdir secrets
+          printf "password" > secrets/postgres_password
+          printf "my_token_key" > secrets/auth_token_key
+          printf "my_cookie_key" > secrets/auth_cookie_key
 
-    - name: Start With golang
-      run: |
-        export DATABASE_PASSWORD_FILE=secrets/postgres_password
-        export AUTH_TOKEN_KEY_FILE=secrets/auth_token_key
-        export AUTH_COOKIE_KEY_FILE=secrets/auth_cookie_key
-        go build
-        timeout --preserve-status --signal=SIGINT 2s ./openslides-icc-service
+      - name: Start With golang
+        run: |
+          export DATABASE_PASSWORD_FILE=secrets/postgres_password
+          export AUTH_TOKEN_KEY_FILE=secrets/auth_token_key
+          export AUTH_COOKIE_KEY_FILE=secrets/auth_cookie_key
+          go build
+          timeout --preserve-status --signal=SIGINT 2s ./openslides-icc-service
 
-    - name: Start With Docker
-      run: |
-        docker build . --tag openslides-icc
-        timeout --preserve-status --signal=SIGINT 5s docker run --network host -v $PWD/secrets:/run/secrets openslides-icc
-      env:
-        DOCKER_BUILDKIT: 1
+      - name: Start With Docker
+        run: |
+          docker build . --tag openslides-icc
+          timeout --preserve-status --signal=SIGINT 5s docker run --network host -v $PWD/secrets:/run/secrets openslides-icc
+        env:
+          DOCKER_BUILDKIT: 1
 
-    - name: Start With Auto Restart
-      run: |
-        make build-dev
-        timeout --preserve-status --signal=SIGINT 5s docker run --network host --env OPENSLIDES_DEVELOPMENT=true openslides-icc-dev
-      env:
-        DOCKER_BUILDKIT: 1
+      - name: Start With Auto Restart
+        run: |
+          make build-dev
+          timeout --preserve-status --signal=SIGINT 5s docker run --network host --env OPENSLIDES_DEVELOPMENT=true openslides-icc-dev
+        env:
+          DOCKER_BUILDKIT: 1
