@@ -1,5 +1,5 @@
 FROM golang:1.23.6-alpine as base
-WORKDIR /root
+WORKDIR /root/openslides-icc-service
 
 RUN apk add git
 
@@ -20,7 +20,8 @@ FROM base as development
 RUN ["go", "install", "github.com/githubnemo/CompileDaemon@latest"]
 EXPOSE 9012
 
-CMD CompileDaemon -log-prefix=false -build="go build" -command="./openslides-icc-service"
+WORKDIR /root
+CMD CompileDaemon -log-prefix=false -build="go build -o icc-service ./openslides-icc-service" -command="./icc-service"
 
 
 # Productive build
@@ -31,7 +32,7 @@ LABEL org.opencontainers.image.description="With the OpenSlides ICC Service clie
 LABEL org.opencontainers.image.licenses="MIT"
 LABEL org.opencontainers.image.source="https://github.com/OpenSlides/openslides-icc-service"
 
-COPY --from=builder /root/openslides-icc-service .
+COPY --from=builder /root/openslides-icc-service/openslides-icc-service .
 EXPOSE 9007
 ENTRYPOINT ["/openslides-icc-service"]
 HEALTHCHECK CMD ["/openslides-icc-service", "health"]
