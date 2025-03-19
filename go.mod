@@ -3,7 +3,7 @@ module github.com/OpenSlides/openslides-icc-service
 go 1.24.0
 
 require (
-	github.com/OpenSlides/openslides-go v0.0.0-20250311094606-bdb5230530d7
+	github.com/OpenSlides/openslides-go v0.0.0-20250319100546-a6c5c5891c98
 	github.com/alecthomas/kong v1.9.0
 	github.com/gomodule/redigo v1.9.2
 	github.com/ory/dockertest/v3 v3.11.0
