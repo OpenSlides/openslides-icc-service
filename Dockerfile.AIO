@@ -2,7 +2,7 @@
 # Question: Prod verwendet Scratch als base und kopiert einfach den Build von einem vorherigen Target
 #           Was ist die Idee hier? Außerdem gibt es kein Workdir für Prod
 
-ARG CONTEXT=dev
+ARG CONTEXT=prod
 ARG GO_IMAGE_VERSION=1.24.2
 
 FROM golang:${GO_IMAGE_VERSION}-alpine as base
