@@ -3,7 +3,7 @@ module github.com/OpenSlides/openslides-icc-service
 go 1.24.0
 
 require (
-	github.com/OpenSlides/openslides-go v0.0.0-20250602072306-624055170872
+	github.com/OpenSlides/openslides-go v0.0.0-20250602214629-1d5b7cd68c14
 	github.com/alecthomas/kong v1.11.0
 	github.com/gomodule/redigo v1.9.2
 	github.com/ory/dockertest/v3 v3.12.0
@@ -28,7 +28,7 @@ require (
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
-	github.com/jackc/pgx/v5 v5.7.4 // indirect
+	github.com/jackc/pgx/v5 v5.7.5 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/sys/user v0.3.0 // indirect
