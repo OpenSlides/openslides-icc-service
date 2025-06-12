@@ -36,16 +36,26 @@ jobs:
           go build
           timeout --preserve-status --signal=SIGINT 2s ./openslides-icc-service
 
+      - name: Build Prod
+        uses: Janmtbehrens/OpenSlides/dev/actions/build-service@all-in-one
+        with:
+          service: icc
+          context: prod
+
       - name: Start With Docker
         run: |
-          docker build . --tag openslides-icc
           timeout --preserve-status --signal=SIGINT 5s docker run --network host -v $PWD/secrets:/run/secrets openslides-icc
         env:
           DOCKER_BUILDKIT: 1
 
+      - name: Build Dev
+        uses: Janmtbehrens/OpenSlides/dev/actions/build-service@all-in-one
+        with:
+          service: icc
+          context: dev
+
       - name: Start With Auto Restart
         run: |
-          make build-dev
           timeout --preserve-status --signal=SIGINT 5s docker run --network host --env OPENSLIDES_DEVELOPMENT=true openslides-icc-dev
         env:
           DOCKER_BUILDKIT: 1
