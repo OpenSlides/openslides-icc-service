@@ -24,12 +24,6 @@ LABEL org.opencontainers.image.source="https://github.com/OpenSlides/openslides-
 
 EXPOSE 9007
 
-## Command
-COPY ./dev/command.sh ./
-RUN chmod +x command.sh
-CMD ["./command.sh"]
-
-
 
 # Development Image
 
@@ -37,12 +31,9 @@ FROM base as dev
 
 RUN ["go", "install", "github.com/githubnemo/CompileDaemon@latest"]
 
-WORKDIR /root
+## Command
+CMD ["CompileDaemon","-log-prefix=false","-build='go build'","-command='./openslides-icc-service'"]
 
-## Command (workdir reset)
-COPY ./dev/command.sh ./
-RUN chmod +x command.sh
-HEALTHCHECK CMD ["/openslides-icc-service", "health"]
 
 
 # Testing Image
