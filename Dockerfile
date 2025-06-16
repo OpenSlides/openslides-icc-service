@@ -32,7 +32,7 @@ FROM base as dev
 RUN ["go", "install", "github.com/githubnemo/CompileDaemon@latest"]
 
 ## Command
-CMD ["CompileDaemon","-log-prefix=false","-build='go build'","-command='./openslides-icc-service'"]
+CMD CompileDaemon -log-prefix=false -build="go build" -command="./openslides-icc-service"
 
 
 
