@@ -1,10 +1,10 @@
 ARG CONTEXT=prod
 
-FROM golang:1.24.2-alpine as base
+FROM golang:1.24.4-alpine as base
 
 ## Setup
 ARG CONTEXT
-WORKDIR /root/openslides-icc-service
+WORKDIR /app/openslides-icc-service
 ENV ${CONTEXT}=1
 
 ## Install
@@ -59,7 +59,7 @@ LABEL org.opencontainers.image.licenses="MIT"
 LABEL org.opencontainers.image.source="https://github.com/OpenSlides/openslides-icc-service"
 
 EXPOSE 9007
-COPY --from=builder /root/openslides-icc-service/openslides-icc-service .
+COPY --from=builder /app/openslides-icc-service/openslides-icc-service .
 ENTRYPOINT ["/openslides-icc-service"]
 HEALTHCHECK CMD ["/openslides-icc-service", "health"]
 
