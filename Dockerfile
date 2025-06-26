@@ -5,7 +5,9 @@ FROM golang:1.24.4-alpine as base
 ## Setup
 ARG CONTEXT
 WORKDIR /app/openslides-icc-service
-ENV ${CONTEXT}=1
+# Used for easy target differentiation
+ARG ${CONTEXT}=1 
+ENV APP_CONTEXT=${CONTEXT}
 
 ## Install
 RUN apk add git --no-cache
