@@ -5,8 +5,6 @@ FROM golang:1.24.4-alpine as base
 ## Setup
 ARG CONTEXT
 WORKDIR /app/openslides-icc-service
-# Used for easy target differentiation
-ARG ${CONTEXT}=1 
 ENV APP_CONTEXT=${CONTEXT}
 
 ## Install
@@ -26,7 +24,6 @@ LABEL org.opencontainers.image.source="https://github.com/OpenSlides/openslides-
 
 EXPOSE 9007
 
-
 # Development Image
 
 FROM base as dev
@@ -36,20 +33,15 @@ RUN ["go", "install", "github.com/githubnemo/CompileDaemon@latest"]
 ## Command
 CMD CompileDaemon -log-prefix=false -build="go build" -command="./openslides-icc-service"
 
-
-
 # Testing Image
 
 FROM dev as tests
-
-
 
 # Production Image
 
 FROM base as builder
 
 RUN go build
-
 
 FROM scratch as prod
 
@@ -64,5 +56,3 @@ EXPOSE 9007
 COPY --from=builder /app/openslides-icc-service/openslides-icc-service .
 ENTRYPOINT ["/openslides-icc-service"]
 HEALTHCHECK CMD ["/openslides-icc-service", "health"]
-
-
