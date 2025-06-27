@@ -56,7 +56,7 @@ type MessageError struct {
 // NewMessageError creates an error of a specific type with a different message.
 //
 // This are messages, that should be send to the client.
-func NewMessageError(t TypeError, format string, a ...interface{}) error {
+func NewMessageError(t TypeError, format string, a ...any) error {
 	return MessageError{
 		t,
 		fmt.Sprintf(format, a...),
