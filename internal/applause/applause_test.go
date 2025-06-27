@@ -27,59 +27,16 @@ func TestApplauseCanReceiveInMeeting(t *testing.T) {
 		}
 	})
 
-	t.Run("Anonyomus disabled", func(t *testing.T) {
+	t.Run("Can see livestream", func(t *testing.T) {
 		backend := new(backendStub)
 		ds := dsmock.Stub(dsmock.YAMLData(`---
-		meeting/1/enable_anonymous: false
-		`))
-		app, _ := applause.New(backend, ds)
-
-		err := app.CanReceive(ctx, 1, 0)
-
-		if !errors.Is(err, iccerror.ErrNotAllowed) {
-			t.Errorf("Got error `%v`, expected `%v`", err, iccerror.ErrNotAllowed)
-		}
-	})
-
-	t.Run("Anonyomus enabled", func(t *testing.T) {
-		backend := new(backendStub)
-		ds := dsmock.Stub(dsmock.YAMLData(`---
-		meeting/1/enable_anonymous: true
-		`))
-		app, _ := applause.New(backend, ds)
-
-		err := app.CanReceive(ctx, 1, 0)
-
-		if err != nil {
-			t.Errorf("Got error `%v`, expected `nil`", err)
-		}
-	})
-
-	t.Run("Not in meeting", func(t *testing.T) {
-		backend := new(backendStub)
-		ds := dsmock.Stub(dsmock.YAMLData(`---
-		meeting/1/enable_anonymous: false
-
-		user/5/id: 5
-		`))
-		app, _ := applause.New(backend, ds)
-
-		err := app.CanReceive(ctx, 1, 5)
-
-		if !errors.Is(err, iccerror.ErrNotAllowed) {
-			t.Errorf("Got error `%v`, expected `%v`", err, iccerror.ErrNotAllowed)
-		}
-	})
-
-	t.Run("User in Meeting", func(t *testing.T) {
-		backend := new(backendStub)
-		ds := dsmock.Stub(dsmock.YAMLData(`---
-		meeting/1/enable_anonymous: false
-
 		user/5/meeting_user_ids: [50]
 		meeting_user/50:
 			meeting_id: 1
 			user_id: 5
+			group_ids: [13]
+		group/13/permissions: [meeting.can_see_livestream]
+		meeting/1/admin_group_id: 1
 		`))
 		app, _ := applause.New(backend, ds)
 
@@ -90,19 +47,23 @@ func TestApplauseCanReceiveInMeeting(t *testing.T) {
 		}
 	})
 
-	t.Run("Superadmin", func(t *testing.T) {
+	t.Run("Can not see livestream", func(t *testing.T) {
 		backend := new(backendStub)
 		ds := dsmock.Stub(dsmock.YAMLData(`---
-		meeting/1/enable_anonymous: false
-
-		user/5/organization_management_level: superadmin
+		user/5/meeting_user_ids: [50]
+		meeting_user/50:
+			meeting_id: 1
+			user_id: 5
+			group_ids: [13]
+		group/13/permissions: []
+		meeting/1/admin_group_id: 1
 		`))
 		app, _ := applause.New(backend, ds)
 
 		err := app.CanReceive(ctx, 1, 5)
 
-		if err != nil {
-			t.Errorf("Got error `%v`, expected `nil`", err)
+		if !errors.Is(err, iccerror.ErrNotAllowed) {
+			t.Errorf("Got error `%v`, expected `%v`", err, iccerror.ErrNotAllowed)
 		}
 	})
 }
