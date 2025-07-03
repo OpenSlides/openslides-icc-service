@@ -5,28 +5,28 @@ import (
 )
 
 // stream parses a redis stream object.
-func stream(reply interface{}, err error) (string, []byte, error) {
+func stream(reply any, err error) (string, []byte, error) {
 	if err != nil {
 		return "", nil, err
 	}
 	if reply == nil {
 		return "", nil, fmt.Errorf("no data returned")
 	}
-	streams, ok := reply.([]interface{})
+	streams, ok := reply.([]any)
 	if !ok {
 		return "", nil, fmt.Errorf("invalid input. Data has to be a list, not %T", reply)
 	}
 	if len(streams) == 0 {
 		return "", nil, fmt.Errorf("invalid input. No stream in data")
 	}
-	stream1, ok := streams[0].([]interface{})
+	stream1, ok := streams[0].([]any)
 	if !ok {
 		return "", nil, fmt.Errorf("invalid input. Stream has to be a two-tuple, not %T", streams[0])
 	}
 	if len(stream1) != 2 {
 		return "", nil, fmt.Errorf("invalid input. Stream has to be a two-tuple, got %d elements", len(stream1))
 	}
-	data, ok := stream1[1].([]interface{})
+	data, ok := stream1[1].([]any)
 	if !ok {
 		return "", nil, fmt.Errorf("invalid input. Stream data has to be a list, got %T", stream1[1])
 	}
@@ -36,7 +36,7 @@ func stream(reply interface{}, err error) (string, []byte, error) {
 	}
 
 	v := data[0]
-	element, ok := v.([]interface{})
+	element, ok := v.([]any)
 	if !ok {
 		return "", nil, fmt.Errorf("invalid input. Stream element has to be a two-tuple, got %T", v)
 	}
@@ -47,7 +47,7 @@ func stream(reply interface{}, err error) (string, []byte, error) {
 	if !ok {
 		return "", nil, fmt.Errorf("invalid input. Stream ID has to be a string, got %T", element[0])
 	}
-	kv, ok := element[1].([]interface{})
+	kv, ok := element[1].([]any)
 	if !ok {
 		return "", nil, fmt.Errorf("invalid input. Key values has to be a list of strings, got %T", element[1])
 	}

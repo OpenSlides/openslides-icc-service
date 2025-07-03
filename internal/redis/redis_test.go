@@ -38,12 +38,9 @@ func TestICC(t *testing.T) {
 	redisConn.Wait(context.Background())
 
 	t.Run("Receive blocks", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
 		done := make(chan error)
 		go func() {
-			_, err := redisConn.NotifyReceive(ctx)
+			_, err := redisConn.NotifyReceive(t.Context())
 			done <- err
 		}()
 
@@ -81,9 +78,6 @@ func TestICC(t *testing.T) {
 	})
 
 	t.Run("Receive gets a send message", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
 		type receiveReturn struct {
 			message []byte
 			err     error
@@ -91,7 +85,7 @@ func TestICC(t *testing.T) {
 
 		done := make(chan receiveReturn)
 		go func() {
-			message, err := redisConn.NotifyReceive(ctx)
+			message, err := redisConn.NotifyReceive(t.Context())
 			done <- receiveReturn{message, err}
 		}()
 
