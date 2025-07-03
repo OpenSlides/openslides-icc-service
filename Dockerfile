@@ -1,7 +1,14 @@
-FROM golang:1.24.4-alpine as base
-WORKDIR /root/openslides-icc-service
+ARG CONTEXT=prod
 
-RUN apk add git
+FROM golang:1.24.4-alpine as base
+
+## Setup
+ARG CONTEXT
+WORKDIR /app/openslides-icc-service
+ENV APP_CONTEXT=${CONTEXT}
+
+## Install
+RUN apk add git --no-cache
 
 COPY go.mod go.sum ./
 RUN go mod download
@@ -9,30 +16,43 @@ RUN go mod download
 COPY main.go main.go
 COPY internal internal
 
-# Build service in seperate stage.
-FROM base as builder
-RUN go build
+## External Information
+LABEL org.opencontainers.image.title="OpenSlides ICC Service"
+LABEL org.opencontainers.image.description="With the OpenSlides ICC Service clients can communicate with each other."
+LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.source="https://github.com/OpenSlides/openslides-icc-service"
 
+EXPOSE 9007
 
-# Development build.
-FROM base as development
+# Development Image
+
+FROM base as dev
 
 RUN ["go", "install", "github.com/githubnemo/CompileDaemon@latest"]
-EXPOSE 9012
 
-WORKDIR /root
-CMD CompileDaemon -log-prefix=false -build="go build -o icc-service ./openslides-icc-service" -command="./icc-service"
+## Command
+CMD CompileDaemon -log-prefix=false -build="go build" -command="./openslides-icc-service"
 
+# Testing Image
 
-# Productive build
-FROM scratch
+FROM dev as tests
+
+# Production Image
+
+FROM base as builder
+
+RUN go build
+
+FROM scratch as prod
+
+WORKDIR /
 
 LABEL org.opencontainers.image.title="OpenSlides ICC Service"
 LABEL org.opencontainers.image.description="With the OpenSlides ICC Service clients can communicate with each other."
 LABEL org.opencontainers.image.licenses="MIT"
 LABEL org.opencontainers.image.source="https://github.com/OpenSlides/openslides-icc-service"
 
-COPY --from=builder /root/openslides-icc-service/openslides-icc-service .
 EXPOSE 9007
+COPY --from=builder /app/openslides-icc-service/openslides-icc-service .
 ENTRYPOINT ["/openslides-icc-service"]
 HEALTHCHECK CMD ["/openslides-icc-service", "health"]
