@@ -18,3 +18,6 @@ run-dev%:
 
 run-tests:
 	bash dev/run-tests.sh
+
+run-lint:
+	bash dev/run-lint.sh -l
