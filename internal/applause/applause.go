@@ -9,6 +9,7 @@ import (
 
 	"github.com/OpenSlides/openslides-go/datastore/dsfetch"
 	"github.com/OpenSlides/openslides-go/datastore/flow"
+	"github.com/OpenSlides/openslides-go/perm"
 	"github.com/OpenSlides/openslides-icc-service/internal/iccerror"
 	"github.com/ostcar/topic"
 )
@@ -81,13 +82,13 @@ func (a *Applause) Send(ctx context.Context, meetingID, userID int) error {
 		return iccerror.NewMessageError(iccerror.ErrNotAllowed, "applause is not enabled in meeting %d. Please be quiet.", meetingID)
 	}
 
-	inMeeting, err := isInMeeting(ctx, fetcher, userID, meetingID)
+	perms, err := perm.New(ctx, fetcher, userID, meetingID)
 	if err != nil {
-		return fmt.Errorf("checking if user is in meeting: %w", err)
+		return fmt.Errorf("getting permissions: %w", err)
 	}
 
-	if !inMeeting {
-		return iccerror.NewMessageError(iccerror.ErrNotAllowed, "You are not part of meeting %d. Please be quiet.", meetingID)
+	if !perms.Has(perm.MeetingCanSeeLivestream) {
+		return iccerror.NewMessageError(iccerror.ErrNotAllowed, "You can not see the Livestream from meeting %d. Please be quiet.", meetingID)
 	}
 
 	if err := a.backend.ApplausePublish(meetingID, userID, time.Now().Unix()); err != nil {
@@ -96,60 +97,19 @@ func (a *Applause) Send(ctx context.Context, meetingID, userID int) error {
 	return nil
 }
 
-func isInMeeting(ctx context.Context, fetch *dsfetch.Fetch, userID, meetingID int) (bool, error) {
-	superadmin, err := isSuperadmin(ctx, fetch, userID)
-	if err != nil {
-		return false, fmt.Errorf("checking for superadmin: %w", err)
-	}
-
-	if superadmin {
-		return true, nil
-	}
-
-	meetingUserIDs, err := fetch.User_MeetingUserIDs(userID).Value(ctx)
-	if err != nil {
-		return false, fmt.Errorf("getting meeting user ids: %w", err)
-	}
-
-	meetingIDs := make([]int, len(meetingUserIDs))
-	for i := 0; i < len(meetingUserIDs); i++ {
-		fetch.MeetingUser_MeetingID(meetingUserIDs[i]).Lazy(&meetingIDs[i])
-	}
-
-	if err := fetch.Execute(ctx); err != nil {
-		return false, fmt.Errorf("getting meeting IDs from user %d: %w", userID, err)
-	}
-
-	for _, mid := range meetingIDs {
-		if mid == meetingID {
-			return true, nil
-		}
-	}
-
-	return false, nil
-}
-
 // CanReceive returns an error, if the user can not receive applause.
 func (a *Applause) CanReceive(ctx context.Context, meetingID, userID int) error {
 	fetcher := dsfetch.New(a.datastore)
-	if userID == 0 {
-		anonymousEnabled, err := fetcher.Meeting_EnableAnonymous(meetingID).Value(ctx)
-		if err != nil {
-			return fmt.Errorf("fetching anonymous enabled: %w", err)
-		}
-		if !anonymousEnabled {
-			return iccerror.NewMessageError(iccerror.ErrNotAllowed, "Anonymous is not enabled")
-		}
-		return nil
-	}
 
-	inMeeting, err := isInMeeting(ctx, fetcher, userID, meetingID)
+	perms, err := perm.New(ctx, fetcher, userID, meetingID)
 	if err != nil {
-		return fmt.Errorf("checking if user is in meeting: %w", err)
+		return fmt.Errorf("getting permissions: %w", err)
 	}
 
-	if !inMeeting {
-		return iccerror.NewMessageError(iccerror.ErrNotAllowed, "You are not part of meeting %d.", meetingID)
+	fmt.Println(perms)
+
+	if !perms.Has(perm.MeetingCanSeeLivestream) {
+		return iccerror.NewMessageError(iccerror.ErrNotAllowed, "You can not see the Livestream from meeting %d.", meetingID)
 	}
 	return nil
 }
@@ -304,17 +264,4 @@ func contextSleep(ctx context.Context, d time.Duration) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	}
-}
-
-func isSuperadmin(ctx context.Context, ds *dsfetch.Fetch, userID int) (bool, error) {
-	if userID == 0 {
-		return false, nil
-	}
-
-	oml, err := ds.User_OrganizationManagementLevel(userID).Value(ctx)
-	if err != nil {
-		return false, fmt.Errorf("getting oml of user %d: %w", userID, err)
-	}
-
-	return oml == "superadmin", nil
 }

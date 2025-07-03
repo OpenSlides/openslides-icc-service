@@ -24,7 +24,7 @@ func SetInfoLogger(l *log.Logger) {
 }
 
 // Info prints output that is important for the user.
-func Info(format string, a ...interface{}) {
+func Info(format string, a ...any) {
 	if infoLogger == nil {
 		return
 	}
@@ -34,7 +34,7 @@ func Info(format string, a ...interface{}) {
 // Debug prints output that is important for development and debugging.
 //
 // If EnableDebug() was not called, this function is a noop.
-func Debug(format string, a ...interface{}) {
+func Debug(format string, a ...any) {
 	if debugLogger == nil {
 		return
 	}
