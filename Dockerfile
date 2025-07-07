@@ -17,11 +17,6 @@ COPY main.go main.go
 COPY internal internal
 
 ## External Information
-LABEL org.opencontainers.image.title="OpenSlides ICC Service"
-LABEL org.opencontainers.image.description="With the OpenSlides ICC Service clients can communicate with each other."
-LABEL org.opencontainers.image.licenses="MIT"
-LABEL org.opencontainers.image.source="https://github.com/OpenSlides/openslides-icc-service"
-
 EXPOSE 9007
 
 # Development Image
@@ -45,7 +40,9 @@ RUN go build
 
 FROM scratch as prod
 
-WORKDIR /
+## Setup
+ARG CONTEXT
+ENV APP_CONTEXT=prod
 
 LABEL org.opencontainers.image.title="OpenSlides ICC Service"
 LABEL org.opencontainers.image.description="With the OpenSlides ICC Service clients can communicate with each other."
@@ -53,6 +50,6 @@ LABEL org.opencontainers.image.licenses="MIT"
 LABEL org.opencontainers.image.source="https://github.com/OpenSlides/openslides-icc-service"
 
 EXPOSE 9007
-COPY --from=builder /app/openslides-icc-service/openslides-icc-service .
+COPY --from=builder /app/openslides-icc-service/openslides-icc-service /
 ENTRYPOINT ["/openslides-icc-service"]
 HEALTHCHECK CMD ["/openslides-icc-service", "health"]
