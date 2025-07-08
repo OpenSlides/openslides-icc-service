@@ -75,10 +75,7 @@ jobs:
           timeout --preserve-status --signal=SIGINT 2s ./openslides-icc-service
 
       - name: Build Prod
-        uses: OpenSlides/OpenSlides/dev/actions/build-service@main
-        with:
-          service: icc
-          context: prod
+        run: make build-prod
 
       - name: Start With Docker
         run: |
@@ -87,10 +84,7 @@ jobs:
           DOCKER_BUILDKIT: 1
 
       - name: Build Dev
-        uses: OpenSlides/OpenSlides/dev/actions/build-service@main
-        with:
-          service: icc
-          context: dev
+        run: make build-dev
 
       - name: Start With Auto Restart
         run: |
