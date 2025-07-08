@@ -10,4 +10,4 @@ build-test:
 	bash ../dev/scripts/makefile/build-service.sh $(SERVICE) tests
 
 run-tests:
-	echo "ICC has no tests"
+	bash dev/run-tests.sh
