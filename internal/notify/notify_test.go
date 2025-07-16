@@ -12,12 +12,9 @@ import (
 )
 
 func TestSend(t *testing.T) {
-	shutdownCtx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	backend := newBackendStrub()
 	n, bg := notify.New(backend)
-	go bg(shutdownCtx, nil)
+	go bg(t.Context(), nil)
 
 	t.Run("invalid json", func(t *testing.T) {
 		defer backend.reset()
@@ -44,7 +41,7 @@ func TestSend(t *testing.T) {
 
 		err := n.Publish(strings.NewReader(`
 		{
-			"to_users": [2], 
+			"to_users": [2],
 			"message": "hans"
 		}`), 1)
 
@@ -60,7 +57,7 @@ func TestSend(t *testing.T) {
 		err := n.Publish(strings.NewReader(`
 		{
 			"channel_id": "abc",
-			"to_users": [2], 
+			"to_users": [2],
 			"message": "hans"
 		}`), 1)
 
@@ -75,7 +72,7 @@ func TestSend(t *testing.T) {
 		err := n.Publish(strings.NewReader(`
 		{
 			"channel_id": "server:1:2",
-			"to_users": [2], 
+			"to_users": [2],
 			"message": "hans"
 		}`), 1)
 
@@ -91,7 +88,7 @@ func TestSend(t *testing.T) {
 		{
 			"channel_id": "server:1:2",
 			"name": "message-name",
-			"to_users": [2], 
+			"to_users": [2],
 			"message": "hans"
 		}`), 1)
 
@@ -111,12 +108,9 @@ func TestSend(t *testing.T) {
 }
 
 func TestReceive(t *testing.T) {
-	shutdownCtx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	backend := newBackendStrub()
 	n, bg := notify.New(backend)
-	go bg(shutdownCtx, nil)
+	go bg(t.Context(), nil)
 
 	_, next := n.Receive(1, 2)
 

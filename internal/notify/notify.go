@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
 	"time"
 
 	"github.com/OpenSlides/openslides-icc-service/internal/iccerror"
@@ -109,7 +110,7 @@ func (n *Notify) Publish(r io.Reader, uid int) error {
 
 	bs, err := json.Marshal(message)
 	if err != nil {
-		return fmt.Errorf("can not marshal notify message: %v", err)
+		return fmt.Errorf("marshal notify message: %v", err)
 	}
 
 	icclog.Debug("Saving notify message: `%s`", bs)
@@ -147,17 +148,14 @@ func (m Message) forMe(meetingID, uid int, cID channelID) bool {
 		return true
 	}
 
-	for _, toUID := range m.ToUsers {
-		if toUID == uid {
-			return true
-		}
+	if slices.Contains(m.ToUsers, uid) {
+		return true
 	}
 
-	for _, toCID := range m.ToChannels {
-		if toCID == cID.String() {
-			return true
-		}
+	if slices.Contains(m.ToChannels, cID.String()) {
+		return true
 	}
+
 	return false
 }
 

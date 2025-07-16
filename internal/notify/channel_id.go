@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 )
 
 // channelID is an id for a notify channel.
@@ -52,8 +51,6 @@ func (c *cIDGen) generate(uid int) channelID {
 }
 
 func (c *cIDGen) buildHostID() {
-	rand.Seed(time.Now().UnixNano())
-
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	const length = 8
 
