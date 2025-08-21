@@ -1,6 +1,6 @@
 ARG CONTEXT=prod
 
-FROM golang:1.24.5-alpine as base
+FROM golang:1.24.5-alpine AS base
 
 ## Setup
 ARG CONTEXT
@@ -21,7 +21,7 @@ EXPOSE 9007
 
 # Development Image
 
-FROM base as dev
+FROM base AS dev
 
 RUN ["go", "install", "github.com/githubnemo/CompileDaemon@latest"]
 
@@ -30,7 +30,7 @@ CMD CompileDaemon -log-prefix=false -build="go build" -command="./openslides-icc
 
 # Testing Image
 
-FROM dev as tests
+FROM dev AS tests
 
 COPY dev/container-tests.sh ./dev/container-tests.sh
 
@@ -47,11 +47,11 @@ CMD ["sleep", "inf"]
 
 # Production Image
 
-FROM base as builder
+FROM base AS builder
 
 RUN go build
 
-FROM scratch as prod
+FROM scratch AS prod
 
 ## Setup
 ARG CONTEXT
