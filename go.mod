@@ -7,7 +7,7 @@ require (
 	github.com/alecthomas/kong v1.12.1
 	github.com/gomodule/redigo v1.9.3
 	github.com/ory/dockertest/v3 v3.12.0
-	github.com/ostcar/topic v0.4.1
+	github.com/ostcar/topic v0.5.0
 )
 
 require (
