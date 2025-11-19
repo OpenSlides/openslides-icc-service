@@ -110,7 +110,7 @@ func initService(lookup environment.Environmenter) (func(context.Context) error,
 	messageBus := messageBusRedis.New(lookup)
 
 	// Datastore Service.
-	database, err := applause.Flow(lookup, messageBus)
+	database, err := applause.Flow(lookup)
 	if err != nil {
 		return nil, fmt.Errorf("init database: %w", err)
 	}
