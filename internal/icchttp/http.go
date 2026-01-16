@@ -96,8 +96,8 @@ func HandleHealth(mux *http.ServeMux) {
 	mux.HandleFunc(
 		"/system/icc/health",
 		func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "application/octet-stream")
-			fmt.Fprintln(w, `{"healthy":true}`)
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprintln(w, `{"healthy":true, "service":"icc"}`)
 		},
 	)
 }
@@ -134,14 +134,15 @@ func HealthClient(ctx context.Context, useHTTPS bool, host, port string, insecur
 	}
 
 	var body struct {
-		Healthy bool `json:"healthy"`
+		Healthy bool   `json:"healthy"`
+		Service string `json:"service"`
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
 		return fmt.Errorf("reading and parsing response body: %w", err)
 	}
 
-	if !body.Healthy {
+	if !body.Healthy || body.Service != "icc" {
 		return fmt.Errorf("Server returned unhealthy response")
 	}
 
