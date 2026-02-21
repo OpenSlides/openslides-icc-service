@@ -12,8 +12,8 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/OpenSlides/openslides-go/oslog"
 	"github.com/OpenSlides/openslides-icc-service/internal/iccerror"
-	"github.com/OpenSlides/openslides-icc-service/internal/icclog"
 )
 
 const (
@@ -42,7 +42,7 @@ func ErrorNoStatus(w io.Writer, err error) {
 	if !errors.As(err, &errTyped) {
 		// Unknown error. Handle as 500er.
 		msg = iccerror.ErrInternal.Error()
-		icclog.Info("Error: %v", err)
+		oslog.Error("Error: %v", err)
 	}
 
 	fmt.Fprint(w, msg)
@@ -69,7 +69,7 @@ func Error(w http.ResponseWriter, err error) {
 	}
 
 	w.WriteHeader(status)
-	icclog.Debug("HTTP: Returning status %d", status)
+	oslog.Debug("HTTP: Returning status %d", status)
 	ErrorNoStatus(w, err)
 }
 

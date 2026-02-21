@@ -3,7 +3,6 @@ package notify_test
 import (
 	"context"
 	"errors"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -11,14 +10,12 @@ import (
 	"time"
 
 	"github.com/OpenSlides/openslides-icc-service/internal/iccerror"
-	"github.com/OpenSlides/openslides-icc-service/internal/icclog"
 	"github.com/OpenSlides/openslides-icc-service/internal/icctest"
 	"github.com/OpenSlides/openslides-icc-service/internal/notify"
 )
 
 func TestHandleReceive(t *testing.T) {
 	url := "/system/icc/notify"
-	icclog.SetInfoLogger(log.Default())
 
 	mp := newMessageProviderStub()
 
