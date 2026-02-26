@@ -4,18 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"os"
-	"strconv"
 
 	"github.com/OpenSlides/openslides-go/auth"
 	"github.com/OpenSlides/openslides-go/environment"
+	"github.com/OpenSlides/openslides-go/oslog"
 	messageBusRedis "github.com/OpenSlides/openslides-go/redis"
 	"github.com/OpenSlides/openslides-icc-service/internal/applause"
 	"github.com/OpenSlides/openslides-icc-service/internal/icchttp"
-	"github.com/OpenSlides/openslides-icc-service/internal/icclog"
 	"github.com/OpenSlides/openslides-icc-service/internal/notify"
 	"github.com/OpenSlides/openslides-icc-service/internal/redis"
 	"github.com/alecthomas/kong"
@@ -43,8 +41,6 @@ var cli struct {
 func main() {
 	ctx, cancel := environment.InterruptContext()
 	defer cancel()
-
-	icclog.SetInfoLogger(log.Default())
 
 	kongCTX := kong.Parse(&cli, kong.UsageOnError())
 	switch kongCTX.Command() {
@@ -99,9 +95,7 @@ func buildDocu() error {
 //
 // Returns a the service as callable.
 func initService(lookup environment.Environmenter) (func(context.Context) error, error) {
-	if devMode, _ := strconv.ParseBool(environment.EnvDevelopment.Value(lookup)); devMode {
-		icclog.SetDebugLogger(log.Default())
-	}
+	oslog.InitLog(lookup)
 
 	var backgroundTasks []func(context.Context, func(error))
 	listenAddr := ":" + envICCServicePort.Value(lookup)
@@ -194,5 +188,5 @@ func handleError(err error) {
 		return
 	}
 
-	icclog.Info("Error: %v", err)
+	oslog.Error("Error: %v", err)
 }

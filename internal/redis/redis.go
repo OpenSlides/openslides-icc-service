@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/OpenSlides/openslides-icc-service/internal/icclog"
+	"github.com/OpenSlides/openslides-go/oslog"
 	"github.com/gomodule/redigo/redis"
 )
 
@@ -49,7 +49,7 @@ func (r *Redis) Wait(ctx context.Context) {
 		if err == nil {
 			return
 		}
-		icclog.Info("Waiting for redis: %v", err)
+		oslog.Info("Waiting for redis: %v", err)
 		time.Sleep(500 * time.Millisecond)
 	}
 }
