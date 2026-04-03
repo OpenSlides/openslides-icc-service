@@ -40,19 +40,6 @@ go build ./cmd/icc
 ./icc
 ```
 
-### With Docker
-
-The docker build uses the auth token. Either configure it to use the fake
-services (see environment variables below) or make sure the service inside the
-docker container can connect to redis and postgres. For example with
-the docker argument --network host. The auth-secrets have to given as a file.
-
-```
-docker build . --tag openslides-icc
-printf "my_token_key" > auth_token_key
-printf "my_cookie_key" > auth_cookie_key
-docker run --network host -v $PWD/auth_token_key:/run/secrets/auth_token_key -v $PWD/auth_cookie_key:/run/secrets/auth_cookie_key openslides-icc
-```
 
 ## Test
 
