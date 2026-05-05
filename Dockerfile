@@ -47,11 +47,23 @@ STOPSIGNAL SIGKILL
 
 # Production Image
 
+#base for use with local openslides-go
+FROM base AS base-gowork
+
+COPY ./lib ../lib
+COPY ./icc.work ../go.work
+
+#builder with local openslides-go
+FROM base-gowork AS builder-gowork
+
+RUN go build
+
 FROM base AS builder
 
 RUN go build
 
-FROM scratch AS prod
+#prepare production image
+FROM scratch AS pre-prod
 
 ## Setup
 ARG CONTEXT
@@ -63,6 +75,13 @@ LABEL org.opencontainers.image.licenses="MIT"
 LABEL org.opencontainers.image.source="https://github.com/OpenSlides/openslides-icc-service"
 
 EXPOSE 9007
-COPY --from=builder /app/openslides-icc-service/openslides-icc-service /
 ENTRYPOINT ["/openslides-icc-service"]
 HEALTHCHECK CMD ["/openslides-icc-service", "health"]
+
+#finalize prod build with local openslides-go
+FROM pre-prod AS prod-gowork
+COPY --from=builder-gowork /app/openslides-icc-service/openslides-icc-service /
+
+#finalize prod build
+FROM pre-prod AS prod
+COPY --from=builder /app/openslides-icc-service/openslides-icc-service /
