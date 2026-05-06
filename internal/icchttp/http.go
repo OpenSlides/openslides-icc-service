@@ -12,8 +12,8 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/OpenSlides/openslides-go/oslog"
 	"github.com/OpenSlides/openslides-icc-service/internal/iccerror"
-	"github.com/OpenSlides/openslides-icc-service/internal/icclog"
 )
 
 const (
@@ -42,7 +42,7 @@ func ErrorNoStatus(w io.Writer, err error) {
 	if !errors.As(err, &errTyped) {
 		// Unknown error. Handle as 500er.
 		msg = iccerror.ErrInternal.Error()
-		icclog.Info("Error: %v", err)
+		oslog.Error("Error: %v", err)
 	}
 
 	fmt.Fprint(w, msg)
@@ -69,7 +69,7 @@ func Error(w http.ResponseWriter, err error) {
 	}
 
 	w.WriteHeader(status)
-	icclog.Debug("HTTP: Returning status %d", status)
+	oslog.Debug("HTTP: Returning status %d", status)
 	ErrorNoStatus(w, err)
 }
 
@@ -96,8 +96,8 @@ func HandleHealth(mux *http.ServeMux) {
 	mux.HandleFunc(
 		"/system/icc/health",
 		func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "application/octet-stream")
-			fmt.Fprintln(w, `{"healthy":true}`)
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprintln(w, `{"healthy":true, "service":"icc"}`)
 		},
 	)
 }
@@ -134,14 +134,15 @@ func HealthClient(ctx context.Context, useHTTPS bool, host, port string, insecur
 	}
 
 	var body struct {
-		Healthy bool `json:"healthy"`
+		Healthy bool   `json:"healthy"`
+		Service string `json:"service"`
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
 		return fmt.Errorf("reading and parsing response body: %w", err)
 	}
 
-	if !body.Healthy {
+	if !body.Healthy || body.Service != "icc" {
 		return fmt.Errorf("Server returned unhealthy response")
 	}
 
