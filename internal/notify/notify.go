@@ -9,8 +9,8 @@ import (
 	"slices"
 	"time"
 
+	"github.com/OpenSlides/openslides-go/oslog"
 	"github.com/OpenSlides/openslides-icc-service/internal/iccerror"
-	"github.com/OpenSlides/openslides-icc-service/internal/icclog"
 	"github.com/ostcar/topic"
 )
 
@@ -73,7 +73,7 @@ func (n *Notify) listen(ctx context.Context, errhandler func(error)) {
 			continue
 		}
 
-		icclog.Debug("Found notify message: `%s`", m)
+		oslog.Debug("Found notify message: `%s`", m)
 		n.topic.Publish(string(m))
 	}
 }
@@ -113,7 +113,7 @@ func (n *Notify) Publish(r io.Reader, uid int) error {
 		return fmt.Errorf("marshal notify message: %v", err)
 	}
 
-	icclog.Debug("Saving notify message: `%s`", bs)
+	oslog.Debug("Saving notify message: `%s`", bs)
 	if err := n.backend.NotifyPublish(bs); err != nil {
 		return fmt.Errorf("saving message in backend: %w", err)
 	}
