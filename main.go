@@ -104,7 +104,7 @@ func initService(lookup environment.Environmenter) (func(context.Context) error,
 	messageBus := messageBusRedis.New(lookup)
 
 	// Datastore Service.
-	database, initApplause, err := applause.Flow(lookup)
+	database, err := applause.Flow(lookup)
 	if err != nil {
 		return nil, fmt.Errorf("init database: %w", err)
 	}
@@ -125,10 +125,6 @@ func initService(lookup environment.Environmenter) (func(context.Context) error,
 	backgroundTasks = append(backgroundTasks, applauseBackground)
 
 	service := func(ctx context.Context) error {
-		if err := initApplause(ctx); err != nil {
-			return fmt.Errorf("init applause: %w", err)
-		}
-
 		go database.Update(ctx, nil)
 
 		for _, bg := range backgroundTasks {
