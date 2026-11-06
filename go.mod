@@ -3,7 +3,7 @@ module github.com/OpenSlides/openslides-icc-service
 go 1.26.0
 
 require (
-	github.com/OpenSlides/openslides-go v0.0.0-20261019143238-985a3acd9af1
+	github.com/OpenSlides/openslides-go v0.0.0-20261106073320-ebf4e1bb74ef
 	github.com/alecthomas/kong v1.16.1
 	github.com/gomodule/redigo v1.9.3
 	github.com/ory/dockertest/v3 v3.12.0
@@ -46,7 +46,7 @@ require (
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/opencontainers/runc v1.3.3 // indirect
 	github.com/rs/zerolog v1.35.1 // indirect
-	github.com/shopspring/decimal v1.4.0 // indirect
+	github.com/shopspring/decimal v1.6.0 // indirect
 	github.com/sirupsen/logrus v1.9.4 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
@@ -56,8 +56,8 @@ require (
 	go.opentelemetry.io/otel v1.44.0 // indirect
 	go.opentelemetry.io/otel/metric v1.44.0 // indirect
 	go.opentelemetry.io/otel/trace v1.44.0 // indirect
-	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/sync v0.23.0 // indirect
-	golang.org/x/sys v0.48.0 // indirect
+	go.yaml.in/yaml/v3 v3.0.6 // indirect
+	golang.org/x/sync v0.24.0 // indirect
+	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/text v0.40.0 // indirect
 )
