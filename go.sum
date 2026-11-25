@@ -8,8 +8,8 @@ github.com/Microsoft/go-winio v0.6.4 h1:kJF2pamtYCWXf0xAT8sAkwKC0pMl2HYBrRPHAqyU
 github.com/Microsoft/go-winio v0.6.4/go.mod h1:1xl5JXG4ze/m74GH6Dc4Mwxfc3VL5siRVQjIAlHH07U=
 github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 h1:TngWCqHvy9oXAN6lEVMRuU21PR1EtLVZJmdB18Gu3Rw=
 github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5/go.mod h1:lmUJ/7eu/Q8D7ML55dXQrVaamCz2vxCfdQBasLZfHKk=
-github.com/OpenSlides/openslides-go v0.0.0-20261125153846-e386e7ae0d13 h1:tYm4RzPSEJMIGfmgkeaUKL9tBwyOoAPDq4YVP8TF+ug=
-github.com/OpenSlides/openslides-go v0.0.0-20261125153846-e386e7ae0d13/go.mod h1:CXvs8XVq485RUauMKoM231HYSvik831n69+UrRu41+M=
+github.com/OpenSlides/openslides-go v0.0.0-20261125181811-c57d1a8d8c59 h1:6hp2ELUkuCTTHNiy5dtwCnafUSutFjWZvYPJRAMl+mY=
+github.com/OpenSlides/openslides-go v0.0.0-20261125181811-c57d1a8d8c59/go.mod h1:IxDgCmzhbuZRUGPdHP/Lm8Imtu5oyxkOeg2q7+PiFZQ=
 github.com/alecthomas/assert/v2 v2.11.0 h1:2Q9r3ki8+JYXvGsDyBXwH3LcJ+WK5D0gc5E8vS6K3D0=
 github.com/alecthomas/assert/v2 v2.11.0/go.mod h1:Bze95FyfUr7x34QZrjL+XP+0qgp/zg8yS+TtBj1WA3k=
 github.com/alecthomas/kong v1.17.0 h1:f52BVWChYMDkMkCoqkEWRuFOk/K4B5LO7xIijeLJRdk=
@@ -98,8 +98,8 @@ github.com/opencontainers/runc v1.3.3 h1:qlmBbbhu+yY0QM7jqfuat7M1H3/iXjju3VkP9lk
 github.com/opencontainers/runc v1.3.3/go.mod h1:D7rL72gfWxVs9cJ2/AayxB0Hlvn9g0gaF1R7uunumSI=
 github.com/ory/dockertest/v3 v3.12.0 h1:3oV9d0sDzlSQfHtIaB5k6ghUCVMVLpAY8hwrqoCyRCw=
 github.com/ory/dockertest/v3 v3.12.0/go.mod h1:aKNDTva3cp8dwOWwb9cWuX84aH5akkxXRvO7KCwWVjE=
-github.com/ory/dockertest/v4 v4.0.1 h1:C/xNcrUPVpl6gYLXd+iRF9Xh4H/2gBOhvwxZJcdfI6E=
-github.com/ory/dockertest/v4 v4.0.1/go.mod h1:CTjCdAvq8GF2I/B51rDOlTVp7A04E59Q0UE1faePOWE=
+github.com/ory/dockertest/v4 v4.0.0 h1:i19aFsO/VXE0VrMk4ifnKW4G/KIJ93PCjLOslxXoPME=
+github.com/ory/dockertest/v4 v4.0.0/go.mod h1:b5Ofu8VIxWNhXFvQcLu17pRNQdoUBKtXBW74G4Ygzx8=
 github.com/ostcar/topic v0.7.0 h1:wjx1AytG+ugjV7XOzfJTZsmVv5y8MD7tyEoJsmhbgEM=
 github.com/ostcar/topic v0.7.0/go.mod h1:F/Ywf86Jj8NoXr0gdHhDeUGzZf4bEvHcCEuZyOaG7ko=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
